@@ -1,0 +1,8 @@
+name: test
+path: ../datasets/
+n_simulations: 5
+n_steps_per_movment: 10
+cam_resolution:
+- 64
+- 32
+n_samples: 200

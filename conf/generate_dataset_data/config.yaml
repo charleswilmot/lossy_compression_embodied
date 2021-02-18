@@ -1,0 +1,23 @@
+name: ???
+path: ../datasets/
+n_simulations: 1
+n_steps_per_movment: 10
+cam_resolution:
+  - 512
+  - 256
+n_samples: 100
+
+
+hydra:
+  run:
+    dir: ../datasets/generate_dataset_data_logs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ../datasets/${now:%Y-%m-%d}/${now:%H-%M-%S}/
+    subdir: job${hydra.job.num}_${hydra.job.override_dirname}
+  job:
+    config:
+      # configuration for the ${hydra.job.override_dirname} runtime variable
+      override_dirname:
+        kv_sep: '.'
+        item_sep: '__'
+        exclude_keys: []
