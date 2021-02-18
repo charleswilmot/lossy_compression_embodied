@@ -38,7 +38,7 @@ class DataGenerator:
             ('arm0_joints', np.float32, (7,)),
             ('arm1_end_eff', np.float32, (3,)),
             ('arm1_joints', np.float32, (7,)),
-            ('frame_id', np.int32),
+            ('frame_path', np.unicode_, 12),
         ])
         self._buffer = np.zeros(shape=self.n_simulations, dtype=self._buffer_dtype)
         self._current_frame_id = 0
@@ -69,11 +69,14 @@ class DataGenerator:
         self._buffer['arm1_joints'] = joint_positions[:, 7:]
         self._buffer['arm0_end_eff'] = end_eff_positions[:, :3]
         self._buffer['arm1_end_eff'] = end_eff_positions[:, 3:]
-        self._buffer['frame_id'] = np.arange(
-            self._current_frame_id,
-            self._current_frame_id + self.n_simulations
-        )
-        print('average distance to target: {}'.format(np.mean(np.abs(positions - joint_positions), axis=0)))
+        self._buffer['frame_path'] = [
+            '{:08d}.jpg'.format(x)
+            for x in range(
+                self._current_frame_id,
+                self._current_frame_id + self.n_simulations
+            )
+        ]
+        # print('average distance to target: {}'.format(np.mean(np.abs(positions - joint_positions), axis=0)))
 
     def save_frames(self):
         ids = np.arange(
@@ -83,7 +86,7 @@ class DataGenerator:
         with self.simulations.distribute_args():
             frames = (np.array(self.simulations.get_frame(self.cameras)) * 255).astype(np.uint8)
         for id, frame in zip(ids, frames):
-            Image.fromarray(frame).save(self.path + '/{:06d}.jpg'.format(id))
+            Image.fromarray(frame).save(self.path + '/{:08d}.jpg'.format(id))
 
     def flush_buffer(self):
         self.array_on_disk.append(self._buffer)
