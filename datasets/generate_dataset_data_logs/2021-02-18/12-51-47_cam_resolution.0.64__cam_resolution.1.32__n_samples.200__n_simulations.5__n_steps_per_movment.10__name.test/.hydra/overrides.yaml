@@ -1,6 +1,0 @@
-- name=test
-- n_samples=200
-- n_simulations=5
-- n_steps_per_movment=10
-- cam_resolution.0=64
-- cam_resolution.1=32
