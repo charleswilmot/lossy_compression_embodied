@@ -1,0 +1,1 @@
+export LD_LIBRARY_PATH=/home/cwilmot/Software/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/

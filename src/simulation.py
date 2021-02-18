@@ -1,8 +1,8 @@
+import os
 from pyrep import PyRep
 from pyrep.objects import VisionSensor
 from pyrep.const import ObjectType
 import multiprocessing as mp
-import os
 from pathlib import Path
 from collections import defaultdict
 from custom_shapes import TapShape, ButtonShape, LeverShape, Kuka
