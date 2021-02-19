@@ -8,6 +8,7 @@ from PIL import Image
 import hydra
 from hydra.utils import get_original_cwd
 import numpy as np
+from welford import Welford
 
 
 class DataGenerator:
@@ -41,6 +42,13 @@ class DataGenerator:
             ('frame_path', np.unicode_, 12),
         ])
         self._buffer = np.zeros(shape=self.n_simulations, dtype=self._buffer_dtype)
+        self._welfords = {
+            'arm0_end_eff': Welford(shape=(3,)),
+            'arm0_joints': Welford(shape=(7,)),
+            'arm1_end_eff': Welford(shape=(3,)),
+            'arm1_joints': Welford(shape=(7,)),
+        }
+        self._frame_welford = Welford(shape=(self.cam_resolution[1], self.cam_resolution[0], 3))
         self._current_frame_id = 0
         with self.simulations.specific([0]):
             self._intervals = self.simulations.get_joint_intervals()[0]
@@ -50,8 +58,13 @@ class DataGenerator:
             self.move_arms()
             self.save_frames()
             self.flush_buffer()
+            self.aggregate_mean_std()
             self._current_frame_id += self.n_simulations
             print("generated {: 8d}/{: 8d} frames".format(self._current_frame_id, n))
+
+    def aggregate_mean_std(self):
+        for key, welford in self._welfords.items():
+            welford(self._buffer[key])
 
     def move_arms(self):
         with self.simulations.distribute_args():
@@ -85,18 +98,29 @@ class DataGenerator:
         )
         with self.simulations.distribute_args():
             frames = (np.array(self.simulations.get_frame(self.cameras)) * 255).astype(np.uint8)
+        self._frame_welford(frames)
         for id, frame in zip(ids, frames):
             Image.fromarray(frame).save(self.path + '/{:08d}.jpg'.format(id))
 
     def flush_buffer(self):
         self.array_on_disk.append(self._buffer)
 
+    def close(self):
+        self.array_on_disk.close()
+        mean_std = np.zeros(shape=2, dtype=self._buffer_dtype)
+        for key, welford in self._welfords.items():
+            mean_std[key][0] = welford.mean
+            mean_std[key][1] = welford.std
+        with appendable_array_file(self.path + '/mean_std.dat') as f:
+            f.append(mean_std)
+        with appendable_array_file(self.path + '/mean_std_frame.dat') as f:
+            f.append(np.stack([self._frame_welford.mean, self._frame_welford.std], axis=0))
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.array_on_disk.close()
-
+        self.close()
 
 @hydra.main(config_path="../conf/generate_dataset_data/", config_name="config.yaml")
 def main(config):

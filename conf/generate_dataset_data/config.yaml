@@ -1,11 +1,11 @@
 name: ???
 path: ../datasets/
-n_simulations: 1
+n_simulations: 10
 n_steps_per_movment: 10
 cam_resolution:
-  - 512
-  - 256
-n_samples: 100
+  - 64
+  - 32
+n_samples: 2500
 
 
 hydra:
