@@ -36,37 +36,32 @@ class DataGenerator:
         self.simulations.start_sim()
         self._buffer_dtype = np.dtype([
             ('arm0_end_eff', np.float32, (3,)),
-            ('arm0_joints', np.float32, (7,)),
+            ('arm0_positions', np.float32, (7,)),
+            ('arm0_velocities', np.float32, (7,)),
+            ('arm0_forces', np.float32, (7,)),
             ('arm1_end_eff', np.float32, (3,)),
-            ('arm1_joints', np.float32, (7,)),
+            ('arm1_positions', np.float32, (7,)),
+            ('arm1_velocities', np.float32, (7,)),
+            ('arm1_forces', np.float32, (7,)),
             ('frame_path', np.unicode_, 12),
         ])
         self._buffer = np.zeros(shape=self.n_simulations, dtype=self._buffer_dtype)
         self._welfords = {
             'arm0_end_eff': Welford(shape=(3,)),
-            'arm0_joints': Welford(shape=(7,)),
+            'arm0_positions': Welford(shape=(7,)),
+            'arm0_velocities': Welford(shape=(7,)),
+            'arm0_forces': Welford(shape=(7,)),
             'arm1_end_eff': Welford(shape=(3,)),
-            'arm1_joints': Welford(shape=(7,)),
+            'arm1_positions': Welford(shape=(7,)),
+            'arm1_velocities': Welford(shape=(7,)),
+            'arm1_forces': Welford(shape=(7,)),
         }
         self._frame_welford = Welford(shape=(self.cam_resolution[1], self.cam_resolution[0], 3))
         self._current_frame_id = 0
         with self.simulations.specific([0]):
             self._intervals = self.simulations.get_joint_intervals()[0]
 
-    def generate(self, n):
-        for i in range(n // self.n_simulations):
-            self.move_arms()
-            self.save_frames()
-            self.flush_buffer()
-            self.aggregate_mean_std()
-            self._current_frame_id += self.n_simulations
-            print("generated {: 8d}/{: 8d} frames".format(self._current_frame_id, n))
-
-    def aggregate_mean_std(self):
-        for key, welford in self._welfords.items():
-            welford(self._buffer[key])
-
-    def move_arms(self):
+    def set_random_target_position(self):
         with self.simulations.distribute_args():
             positions = np.random.uniform(
                 size=(self.n_simulations, 14),
@@ -74,12 +69,34 @@ class DataGenerator:
                 high=self._intervals[:, 1]
             )
             self.simulations.set_joint_target_positions(positions)
-        for i in range(self.n_steps_per_movment): self.simulations.step_sim()
-        ########################################################################
+
+    def generate(self, n):
+        for i in range(n // (self.n_simulations * self.n_steps_per_movment)):
+            self.set_random_target_position()
+            for j in range(self.n_steps_per_movment):
+                self.move_arms()
+                self.save_frames()
+                self.flush_buffer()
+                self.aggregate_mean_std()
+                self._current_frame_id += self.n_simulations
+                print("generated {: 8d}/{: 8d} frames".format(self._current_frame_id, n))
+
+    def aggregate_mean_std(self):
+        for key, welford in self._welfords.items():
+            welford(self._buffer[key])
+
+    def move_arms(self):
+        self.simulations.step_sim()
         joint_positions = np.array(self.simulations.get_joint_positions())
+        joint_velocities = np.array(self.simulations.get_joint_velocities())
+        joint_forces = np.array(self.simulations.get_joint_forces())
         end_eff_positions = np.array(self.simulations.get_tips())
-        self._buffer['arm0_joints'] = joint_positions[:, :7]
-        self._buffer['arm1_joints'] = joint_positions[:, 7:]
+        self._buffer['arm0_positions'] = joint_positions[:, :7]
+        self._buffer['arm1_positions'] = joint_positions[:, 7:]
+        self._buffer['arm0_velocities'] = joint_velocities[:, :7]
+        self._buffer['arm1_velocities'] = joint_velocities[:, 7:]
+        self._buffer['arm0_forces'] = joint_forces[:, :7]
+        self._buffer['arm1_forces'] = joint_forces[:, 7:]
         self._buffer['arm0_end_eff'] = end_eff_positions[:, :3]
         self._buffer['arm1_end_eff'] = end_eff_positions[:, 3:]
         self._buffer['frame_path'] = [
@@ -89,7 +106,6 @@ class DataGenerator:
                 self._current_frame_id + self.n_simulations
             )
         ]
-        # print('average distance to target: {}'.format(np.mean(np.abs(positions - joint_positions), axis=0)))
 
     def save_frames(self):
         ids = np.arange(

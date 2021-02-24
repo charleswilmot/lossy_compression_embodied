@@ -335,6 +335,10 @@ class SimulationConsumer(SimulationConsumerAbstract):
             self._n_joints,
             dtype=np.float32
         )
+        self._arm_joints_forces_buffer = np.zeros(
+            self._n_joints,
+            dtype=np.float32
+        )
         self._arm_joints_torques_buffer = np.zeros(
             self._n_joints,
             dtype=np.float32
@@ -394,6 +398,17 @@ class SimulationConsumer(SimulationConsumerAbstract):
                 arm.get_joint_velocities()
             last = next
         return self._arm_joints_velocities_buffer
+
+    @communicate_return_value
+    def get_joint_forces(self):
+        last = 0
+        next = 0
+        for arm, joint_count in zip(self._arm_list, self._arm_joints_count):
+            next += joint_count
+            self._arm_joints_forces_buffer[last:next] = \
+                arm.get_joint_forces()
+            last = next
+        return self._arm_joints_forces_buffer
 
     def set_joint_target_velocities(self, velocities):
         last = 0

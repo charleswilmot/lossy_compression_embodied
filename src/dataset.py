@@ -7,15 +7,23 @@ def get_dataset(path):
     table_path = path + '/table.dat'
     table = load_appendable_array_file(table_path)
     data_arm0_end_eff = table['arm0_end_eff']
-    data_arm0_joints = table['arm0_joints']
+    data_arm0_positions = table['arm0_positions']
+    data_arm0_velocities = table['arm0_velocities']
+    data_arm0_forces = table['arm0_forces']
     data_arm1_end_eff = table['arm1_end_eff']
-    data_arm1_joints = table['arm1_joints']
+    data_arm1_positions = table['arm1_positions']
+    data_arm1_velocities = table['arm1_velocities']
+    data_arm1_forces = table['arm1_forces']
     data_frame_path = table['frame_path']
     dataset = Dataset.from_tensor_slices({
         'arm0_end_eff': data_arm0_end_eff,
-        'arm0_joints': data_arm0_joints,
+        'arm0_positions': data_arm0_positions,
+        'arm0_velocities': data_arm0_velocities,
+        'arm0_forces': data_arm0_forces,
         'arm1_end_eff': data_arm1_end_eff,
-        'arm1_joints': data_arm1_joints,
+        'arm1_positions': data_arm1_positions,
+        'arm1_velocities': data_arm1_velocities,
+        'arm1_forces': data_arm1_forces,
         'frame_path': data_frame_path,
     })
     return dataset
@@ -43,9 +51,13 @@ def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
         def preprocess(element):
             return {
                 'arm0_end_eff': (element['arm0_end_eff'] - mean['arm0_end_eff']) / std['arm0_end_eff'],
-                'arm0_joints': (element['arm0_joints'] - mean['arm0_joints']) / std['arm0_joints'],
+                'arm0_positions': (element['arm0_positions'] - mean['arm0_positions']) / std['arm0_positions'],
+                'arm0_velocities': (element['arm0_velocities'] - mean['arm0_velocities']) / std['arm0_velocities'],
+                'arm0_forces': (element['arm0_forces'] - mean['arm0_forces']) / std['arm0_forces'],
                 'arm1_end_eff': (element['arm1_end_eff'] - mean['arm1_end_eff']) / std['arm1_end_eff'],
-                'arm1_joints': (element['arm1_joints'] - mean['arm1_joints']) / std['arm1_joints'],
+                'arm1_positions': (element['arm1_positions'] - mean['arm1_positions']) / std['arm1_positions'],
+                'arm1_velocities': (element['arm1_velocities'] - mean['arm1_velocities']) / std['arm1_velocities'],
+                'arm1_forces': (element['arm1_forces'] - mean['arm1_forces']) / std['arm1_forces'],
                 'frame': (tf.cast(
                     tf.io.decode_jpeg(
                         tf.io.read_file(
@@ -60,9 +72,13 @@ def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
         def preprocess(element):
             return {
                 'arm0_end_eff': (element['arm0_end_eff'] - mean['arm0_end_eff']) / std['arm0_end_eff'],
-                'arm0_joints': (element['arm0_joints'] - mean['arm0_joints']) / std['arm0_joints'],
+                'arm0_positions': (element['arm0_positions'] - mean['arm0_positions']) / std['arm0_positions'],
+                'arm0_velocities': (element['arm0_velocities'] - mean['arm0_velocities']) / std['arm0_velocities'],
+                'arm0_forces': (element['arm0_forces'] - mean['arm0_forces']) / std['arm0_forces'],
                 'arm1_end_eff': (element['arm1_end_eff'] - mean['arm1_end_eff']) / std['arm1_end_eff'],
-                'arm1_joints': (element['arm1_joints'] - mean['arm1_joints']) / std['arm1_joints'],
+                'arm1_positions': (element['arm1_positions'] - mean['arm1_positions']) / std['arm1_positions'],
+                'arm1_velocities': (element['arm1_velocities'] - mean['arm1_velocities']) / std['arm1_velocities'],
+                'arm1_forces': (element['arm1_forces'] - mean['arm1_forces']) / std['arm1_forces'],
                 'frame': (tf.cast(
                     tf.io.decode_jpeg(
                         tf.io.read_file(
