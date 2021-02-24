@@ -5,7 +5,7 @@ from experiments import JointEncodingOption1, JointEncodingOption2
 from dataset import get_batched_dataset
 
 
-@hydra.main(config_path="../conf/joint_encoding/", config_name="option_1.yaml")
+@hydra.main(config_path="../conf/joint_encoding/", config_name="option_2.yaml")
 def joint_encoding(config):
     # print(OmegaConf.to_yaml(config))
     # print("\n" * 10)
@@ -15,7 +15,8 @@ def joint_encoding(config):
         n_epochs=1,
         z_score_frames=False
     )
-    exp = JointEncodingOption1(config)
+    exp = JointEncodingOption2(config)
+    exp.train_autoencoder(dataset.map(lambda x: x['frame']))
     exp.train_jointencoder(dataset.map(lambda x: (x['frame'], x['arm0_positions'])))
     exp.save_image_reconstructions(dataset.map(lambda x: (x['frame'], x['arm0_positions'])).take(10))
     exp.train_readout(dataset.map(lambda x: (x['frame'], x['arm0_positions'], x['arm0_end_eff'])))

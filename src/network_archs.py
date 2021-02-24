@@ -56,7 +56,8 @@ class JointEncoder:
         if self.reduction_type == 'mean':
             return tf.reduce_mean(error)
         else:
-            return tf.reduce_sum(tf.reduce_mean(error, axis=[-3, -2, -1]))
+            axis = (x for x in range(error.ndim) if x != 0)
+            return tf.reduce_sum(tf.reduce_mean(error, axis=axis))
 
     @tf.function
     def get_loss_1(self, inp_1, reconstruction_1):
@@ -64,7 +65,8 @@ class JointEncoder:
         if self.reduction_type == 'mean':
             return tf.reduce_mean(error)
         else:
-            return tf.reduce_sum(tf.reduce_mean(error, axis=-1))
+            axis = (x for x in range(error.ndim) if x != 0)
+            return tf.reduce_sum(tf.reduce_mean(error, axis=axis))
 
     @tf.function
     def __call__(self, inp_0, inp_1, what):
@@ -121,6 +123,64 @@ class JointEncoder:
             grads = tape.gradient(loss, vars)
             self.optimizer.apply_gradients(zip(grads, vars))
         return loss_0, loss_1
+
+
+class AutoEncoder:
+    def __init__(self, config):
+        self.encoding_model = to_model(config.encoding_model)
+        self.decoding_model = to_model(config.decoding_model)
+        self.learning_rate = config.learning_rate
+        self.optimizer = keras.optimizers.Adam(self.learning_rate)
+        self.reduction_type = 'mean'
+
+    @tf.function
+    def get_encoding(self, inp):
+        return self.encoding_model(inp)
+
+    @tf.function
+    def get_reconstruction(self, encoding):
+        return self.decoding_model(encoding)
+
+    @tf.function
+    def get_loss(self, inp, reconstruction):
+        error = (reconstruction - inp) ** 2
+        if self.reduction_type == 'mean':
+            return tf.reduce_mean(error)
+        else:
+            return tf.reduce_sum(tf.reduce_mean(error, axis=[-3, -2, -1]))
+
+    @tf.function
+    def __call__(self, inp, what):
+        _to_number = {
+            'encoding': 0,
+            'reconstructions': 1,
+            'loss': 2,
+        }
+        stop = max(_to_number[w] for w in what)
+        ret = {}
+        encoding = self.get_encoding(inp)
+        if stop > 0:
+            reconstruction = self.get_reconstruction(encoding)
+        if stop > 1:
+            loss = self.get_loss(inp, reconstruction)
+        if 'encoding' in what:
+            ret['encoding'] = encoding
+        if 'reconstructions' in what:
+            ret['reconstruction'] = reconstruction
+        if 'loss' in what:
+            ret['loss'] = loss
+        return ret
+
+    @tf.function
+    def train(self, inp):
+        with tf.GradientTape() as tape:
+            loss = self(inp, what=['loss'])['loss']
+            vars = \
+                self.encoding_model.trainable_variables + \
+                self.decoding_model.trainable_variables
+            grads = tape.gradient(loss, vars)
+            self.optimizer.apply_gradients(zip(grads, vars))
+        return loss
 
 
 class MLP:
