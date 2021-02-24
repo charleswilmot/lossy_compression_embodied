@@ -146,6 +146,7 @@ class JointEncodingOption2(Experiment):
 
 class CrossModalityOption1(Experiment):
     def __init__(self, config):
+        super().__init__()
         self.mod_0_to_1 = MLP(config.mod_0_to_1)
         self.mod_1_to_0 = MLP(config.mod_1_to_0)
         self.jointencoder = JointEncoder(config.jointencoder)
@@ -155,29 +156,54 @@ class CrossModalityOption1(Experiment):
         self.n_epoch_readout = config.readout.n_epochs
 
     def train_cross_modality(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_cross_modality)
-        for inp_0, inp_1 in dataset:
-            self.mod_0_to_1.train(inp_0, inp_1)
-            self.mod_1_to_0.train(inp_1, inp_0)
+        with self.writer.as_default():
+            for inp_0, inp_1 in dataset:
+                loss_0 = self.mod_0_to_1.train(inp_0, inp_1)
+                loss_1 = self.mod_1_to_0.train(inp_1, inp_0)
+                print("loss 0 -> 1 : {:.4f}   loss 1 -> 0 : {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
+                tf.summary.scalar("loss_0_to_1", loss_0, step=step)
+                tf.summary.scalar("loss_1_to_0", loss_1, step=step)
+                step += 1
 
     def train_jointencoder(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_jointencoder)
-        for inp_0, inp_1 in dataset:
-            prediction_0 = self.mod_0_to_1(inp_0)
-            prediction_1 = self.mod_1_to_0(inp_1)
-            self.jointencoder.train(prediction_0, prediction_1)
+        with self.writer.as_default():
+            for inp_0, inp_1 in dataset:
+                prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
+                prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
+                loss_0, loss_1 = self.jointencoder.train(prediction_0, prediction_1)
+                print("image loss: {:.4f}    proprioception loss: {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
+                tf.summary.scalar("jointencoder_loss_0", loss_0, step=step)
+                tf.summary.scalar("jointencoder_loss_1", loss_1, step=step)
+                step += 1
 
     def train_readout(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_readout)
-        for inp_0, inp_1, target in dataset:
-            prediction_0 = self.mod_0_to_1(inp_0)
-            prediction_1 = self.mod_1_to_0(inp_1)
-            encoding = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
-            self.readout.train(encoding, target)
+        with self.writer.as_default():
+            for inp_0, inp_1, target in dataset:
+                prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
+                prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
+                encoding = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
+                loss = self.readout.train(encoding, target)
+                print("readout_loss", loss.numpy())
+                tf.summary.scalar("readout_loss", loss, step=step)
+                step += 1
+
+    def get_image_reconstructions(self, inp_0, inp_1):
+        return self.jointencoder(
+            self.mod_0_to_1(inp_0, what=['output'])['output'],
+            self.mod_1_to_0(inp_1, what=['output'])['output'],
+            what=['reconstructions']
+        )['reconstruction_1']
 
 
 class CrossModalityOption2(Experiment):
     def __init__(self, config):
+        super().__init__()
         self.autoencoder = AutoEncoder(config.autoencoder)
         self.mod_0_to_1 = MLP(config.mod_0_to_1)
         self.mod_1_to_0 = MLP(config.mod_1_to_0)
@@ -189,30 +215,67 @@ class CrossModalityOption2(Experiment):
         self.n_epoch_readout = config.readout.n_epochs
 
     def train_autoencoder(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_autoencoder)
-        for inp in dataset:
-            self.autoencoder.train(inp)
+        with self.writer.as_default():
+            for inp in dataset:
+                loss = self.autoencoder.train(inp)
+                print("autoencoder loss: {:.4f}".format(loss.numpy()))
+                tf.summary.scalar("autoencoder_loss", loss, step=step)
+                step += 1
 
     def train_cross_modality(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_cross_modality)
-        for inp_0, inp_1 in dataset:
-            encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
-            self.mod_0_to_1.train(encoding, inp_1)
-            self.mod_1_to_0.train(inp_1, encoding)
+        with self.writer.as_default():
+            for inp_0, inp_1 in dataset:
+                encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
+                loss_0 = self.mod_0_to_1.train(encoding, inp_1)
+                loss_1 = self.mod_1_to_0.train(inp_1, encoding)
+                print("loss 0 -> 1 : {:.4f}   loss 1 -> 0 : {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
+                tf.summary.scalar("loss_0_to_1", loss_0, step=step)
+                tf.summary.scalar("loss_1_to_0", loss_1, step=step)
+                step += 1
 
     def train_jointencoder(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_jointencoder)
-        for inp_0, inp_1 in dataset:
-            encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
-            prediction_0 = self.mod_0_to_1(encoding)
-            prediction_1 = self.mod_1_to_0(inp_1)
-            self.jointencoder.train(prediction_0, prediction_1)
+        with self.writer.as_default():
+            for inp_0, inp_1 in dataset:
+                encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
+                prediction_0 = self.mod_0_to_1(encoding, what=['output'])['output']
+                prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
+                loss_0, loss_1 = self.jointencoder.train(prediction_0, prediction_1)
+                print("image loss: {:.4f}    proprioception loss: {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
+                tf.summary.scalar("jointencoder_loss_0", loss_0, step=step)
+                tf.summary.scalar("jointencoder_loss_1", loss_1, step=step)
+                step += 1
 
     def train_readout(self, dataset):
+        step = 0
         dataset = dataset.repeat(self.n_epoch_readout)
-        for inp_0, inp_1, target in dataset:
-            encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
-            prediction_0 = self.mod_0_to_1(encoding_a)
-            prediction_1 = self.mod_1_to_0(inp_1)
-            encoding_b = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
-            self.readout.train(encoding_b, target)
+        with self.writer.as_default():
+            for inp_0, inp_1, target in dataset:
+                encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
+                prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
+                prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
+                encoding_b = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
+                loss = self.readout.train(encoding_b, target)
+                print("readout_loss", loss.numpy())
+                tf.summary.scalar("readout_loss", loss, step=step)
+                step += 1
+
+    def get_image_reconstructions(self, inp_0, inp_1):
+        return self.autoencoder.get_reconstruction(
+            self.jointencoder(
+                self.mod_0_to_1(
+                    (
+                        self.autoencoder(
+                            inp_0,
+                            what=['encoding']
+                        )['encoding'] - self.encoding_mean
+                    ) / self.encoding_std),
+                self.mod_1_to_0(inp_1),
+                what=['reconstructions']
+            )['reconstruction_1'] * self.encoding_std + self.encoding_mean
+        )
