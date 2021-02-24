@@ -21,7 +21,7 @@ class JointEncodingOption1:
         with self.writer.as_default():
             for inp_0, inp_1 in dataset:
                 loss_0, loss_1 = self.jointencoder.train(inp_0, inp_1)
-                print(loss_0, loss_1)
+                print("image loss: {:.4f}    proprioception loss: {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
                 tf.summary.scalar("jointencoder_loss_0", loss_0, step=step)
                 tf.summary.scalar("jointencoder_loss_1", loss_1, step=step)
                 step += 1
@@ -33,7 +33,7 @@ class JointEncodingOption1:
             for inp_0, inp_1, target in dataset:
                 encoding = self.jointencoder(inp_0, inp_1, what=['encoding'])['encoding']
                 loss = self.readout.train(encoding, target)
-                print(loss)
+                print("readout_loss", loss.numpy())
                 tf.summary.scalar("readout_loss", loss, step=step)
                 step += 1
 

@@ -17,7 +17,7 @@ def joint_encoding(config):
     )
     exp = JointEncodingOption1(config)
     exp.train_jointencoder(dataset.map(lambda x: (x['frame'], x['arm0_joints'])))
-    exp.save_image_reconstructions(dataset.map(lambda x: (x['frame'], x['arm0_joints'])).take(1))
+    exp.save_image_reconstructions(dataset.map(lambda x: (x['frame'], x['arm0_joints'])).take(10))
     exp.train_readout(dataset.map(lambda x: (x['frame'], x['arm0_joints'], x['arm0_end_eff'])))
 
 
