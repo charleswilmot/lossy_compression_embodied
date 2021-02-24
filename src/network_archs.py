@@ -129,6 +129,7 @@ class AutoEncoder:
     def __init__(self, config):
         self.encoding_model = to_model(config.encoding_model)
         self.decoding_model = to_model(config.decoding_model)
+        self.encoding_size = self.encoding_model.layers[-1].units
         self.learning_rate = config.learning_rate
         self.optimizer = keras.optimizers.Adam(self.learning_rate)
         self.reduction_type = 'mean'

@@ -3,6 +3,7 @@ import numpy as np
 from network_archs import JointEncoder, AutoEncoder, MLP
 from PIL import Image
 from os import makedirs
+from welford import Welford
 
 
 class Experiment:
@@ -97,12 +98,20 @@ class JointEncodingOption2(Experiment):
                 tf.summary.scalar("autoencoder_loss", loss, step=step)
                 step += 1
 
+    def z_score_encoding(self, dataset):
+        welford = Welford(shape=(self.autoencoder.encoding_size,))
+        for inp in dataset:
+            encoding = self.autoencoder(inp, what=['encoding'])['encoding']
+            welford(encoding)
+        self.encoding_mean = welford.mean
+        self.encoding_std = welford.std
+
     def train_jointencoder(self, dataset):
         step = 0
         dataset = dataset.repeat(self.n_epoch_jointencoder)
         with self.writer.as_default():
             for inp_0, inp_1 in dataset:
-                encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
+                encoding = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
                 loss_0, loss_1 = self.jointencoder.train(encoding, inp_1)
                 print("image loss: {:.4f}    proprioception loss: {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
                 tf.summary.scalar("jointencoder_loss_0", loss_0, step=step)
@@ -115,6 +124,7 @@ class JointEncodingOption2(Experiment):
         with self.writer.as_default():
             for inp_0, inp_1, target in dataset:
                 encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
+                encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
                 encoding_b = self.jointencoder(encoding_a, inp_1, what=['encoding'])['encoding']
                 loss = self.readout.train(encoding_b, target)
                 print("readout_loss", loss.numpy())
@@ -124,13 +134,13 @@ class JointEncodingOption2(Experiment):
     def get_image_reconstructions(self, inp_0, inp_1):
         return self.autoencoder.get_reconstruction(
             self.jointencoder(
-                self.autoencoder(
+                (self.autoencoder(
                     inp_0,
                     what=['encoding']
-                )['encoding'],
+                )['encoding'] - self.encoding_mean) / self.encoding_std,
                 inp_1,
                 what=['reconstructions']
-            )['reconstruction_0']
+            )['reconstruction_0'] * self.encoding_std + self.encoding_mean
         )
 
 
