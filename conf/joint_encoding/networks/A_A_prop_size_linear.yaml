@@ -1,0 +1,76 @@
+# @package _group_._name_
+backend: tensorflow
+class_name: Sequential
+config:
+  layers:
+  # - class_name: InputLayer
+  #   config:
+  #     batch_input_shape:
+  #     - null
+  #     - ${pre_encoding_size}
+  #     dtype: float32
+  #     name: input_6
+  #     ragged: false
+  #     sparse: false
+  - class_name: Dense
+    config:
+      activation: leaky_relu
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      dtype: float32
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: GlorotUniform
+        config:
+          seed: null
+      kernel_regularizer: null
+      name: dense_11
+      trainable: true
+      units: ${default_layer_size_A}
+      use_bias: true
+  - class_name: Dense
+    config:
+      activation: leaky_relu
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      dtype: float32
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: GlorotUniform
+        config:
+          seed: null
+      kernel_regularizer: null
+      name: dense_12
+      trainable: true
+      units: ${default_layer_size_A}
+      use_bias: true
+  - class_name: Dense
+    config:
+      activation: linear
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      dtype: float32
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: GlorotUniform
+        config:
+          seed: null
+      kernel_regularizer: null
+      name: dense_13
+      trainable: true
+      units: ${proprioception_size}
+      use_bias: true
+  name: sequential_5
+keras_version: 2.4.0
