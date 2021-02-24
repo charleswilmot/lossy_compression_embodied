@@ -35,26 +35,44 @@ def get_mean_std_frame(path):
     return mean_frame, std_frame
 
 
-def get_batched_dataset(path, batch_size, n_epochs=None):
+def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
     mean, std = get_mean_std(path)
     mean_frame, std_frame = get_mean_std_frame(path)
 
-    def preprocess(element):
-        return {
-            'arm0_end_eff': (element['arm0_end_eff'] - mean['arm0_end_eff']) / std['arm0_end_eff'],
-            'arm0_joints': (element['arm0_joints'] - mean['arm0_joints']) / std['arm0_joints'],
-            'arm1_end_eff': (element['arm1_end_eff'] - mean['arm1_end_eff']) / std['arm1_end_eff'],
-            'arm1_joints': (element['arm1_joints'] - mean['arm1_joints']) / std['arm1_joints'],
-            'frame': (tf.cast(
-                tf.io.decode_jpeg(
-                    tf.io.read_file(
-                        path + '/' + element['frame_path']
+    if z_score_frames:
+        def preprocess(element):
+            return {
+                'arm0_end_eff': (element['arm0_end_eff'] - mean['arm0_end_eff']) / std['arm0_end_eff'],
+                'arm0_joints': (element['arm0_joints'] - mean['arm0_joints']) / std['arm0_joints'],
+                'arm1_end_eff': (element['arm1_end_eff'] - mean['arm1_end_eff']) / std['arm1_end_eff'],
+                'arm1_joints': (element['arm1_joints'] - mean['arm1_joints']) / std['arm1_joints'],
+                'frame': (tf.cast(
+                    tf.io.decode_jpeg(
+                        tf.io.read_file(
+                            path + '/' + element['frame_path']
+                        ),
+                        channels=3
                     ),
-                    channels=3
-                ),
-                tf.float32
-            ) - mean_frame) / (std_frame + 0.2)
-        }
+                    tf.float32
+                ) - mean_frame) / (std_frame + 0.2)
+            }
+    else:
+        def preprocess(element):
+            return {
+                'arm0_end_eff': (element['arm0_end_eff'] - mean['arm0_end_eff']) / std['arm0_end_eff'],
+                'arm0_joints': (element['arm0_joints'] - mean['arm0_joints']) / std['arm0_joints'],
+                'arm1_end_eff': (element['arm1_end_eff'] - mean['arm1_end_eff']) / std['arm1_end_eff'],
+                'arm1_joints': (element['arm1_joints'] - mean['arm1_joints']) / std['arm1_joints'],
+                'frame': (tf.cast(
+                    tf.io.decode_jpeg(
+                        tf.io.read_file(
+                            path + '/' + element['frame_path']
+                        ),
+                        channels=3
+                    ),
+                    tf.float32
+                ) - 127.5) / 127.5
+            }
 
     dataset = get_dataset(path)
     dataset = dataset.shuffle(batch_size * 5, reshuffle_each_iteration=True)
