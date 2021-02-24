@@ -1,13 +1,18 @@
 pre_encoding_size: 100
 two_times_pre_encoding_size: 200
+pre_encoding_size_plus_prop_size: 107
 bottleneck_size: 100
 end_effector_size: 3
 proprioception_size: 7
-default_layer_size: 200
+default_layer_size_A: 200
 
 dataset:
-  path: ../datasets/32x64_new/
+  path: ../datasets/32x64_with_vel_force/
   batch_size: 128
+
+autoencoder:
+  learning_rate: 1e-3
+  n_epochs: 1
 
 jointencoder:
   learning_rate: 1e-3
@@ -19,13 +24,15 @@ readout:
   learning_rate: 1e-3
 
 defaults:
+  - networks@autoencoder.encoding_model: conv_conv_dense_pre_encoding_size
+  - networks@autoencoder.decoding_model: dense_8192_convT_convT
   - networks@jointencoder.pre_encoding_model_0: conv_conv_dense_pre_encoding_size
-  - networks@jointencoder.pre_encoding_model_1: prop_size_100_100_pre_encoding_size
-  - networks@jointencoder.encoding_model: pre_encoding_size_100_100_bn_size
-  - networks@jointencoder.pre_decoding_model: bn_size_100_100_pre_encoding_size
-  - networks@jointencoder.decoding_model_0: pre_encoding_size_dense_convT_convT
-  - networks@jointencoder.decoding_model_1: pre_encoding_size_100_100_prop_size
-  - networks@readout.model: bn_size_100_100_ee_size
+  - networks@jointencoder.pre_encoding_model_1: A_A_pre_encoding_size
+  - networks@jointencoder.encoding_model: A_A_bn_size
+  - networks@jointencoder.pre_decoding_model: A_A_two_pre_encoding_size
+  - networks@jointencoder.decoding_model_0: dense_8192_convT_convT
+  - networks@jointencoder.decoding_model_1: A_A_prop_size
+  - networks@readout.model: A_A_ee_size
 
 hydra:
   run:

@@ -1,0 +1,49 @@
+pre_encoding_size: 100
+two_times_pre_encoding_size: 200
+pre_encoding_size_plus_prop_size: 107
+bottleneck_size: 100
+end_effector_size: 3
+proprioception_size: 7
+default_layer_size_A: 200
+
+dataset:
+  path: ../datasets/32x64_with_vel_force/
+  batch_size: 128
+
+autoencoder:
+  learning_rate: 1e-3
+  n_epochs: 1
+
+jointencoder:
+  learning_rate: 1e-3
+  n_epochs: 1
+  pre_reconstruction_0_size: 100
+
+readout:
+  n_epochs: 1
+  learning_rate: 1e-3
+
+defaults:
+  - networks@autoencoder.encoding_model: conv_conv_dense_pre_encoding_size
+  - networks@autoencoder.decoding_model: dense_8192_convT_convT
+  - networks@jointencoder.pre_encoding_model_0: identity
+  - networks@jointencoder.pre_encoding_model_1: identity
+  - networks@jointencoder.encoding_model: A_A_bn_size
+  - networks@jointencoder.pre_decoding_model: A_A_pre_encoding_size_plus_prop_size
+  - networks@jointencoder.decoding_model_0: identity
+  - networks@jointencoder.decoding_model_1: identity
+  - networks@readout.model: A_A_ee_size
+
+hydra:
+  run:
+    dir: ../experiments/${now:%Y-%m-%d}/${now:%H-%M-%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ../experiments/${now:%Y-%m-%d}/${now:%H-%M-%S}/
+    subdir: job${hydra.job.num}_${hydra.job.override_dirname}
+  job:
+    config:
+      # configuration for the ${hydra.job.override_dirname} runtime variable
+      override_dirname:
+        kv_sep: '.'
+        item_sep: '__'
+        exclude_keys: []

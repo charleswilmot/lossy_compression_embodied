@@ -1,0 +1,13 @@
+# @package _group_._name_
+backend: tensorflow
+class_name: Sequential
+config:
+  layers:
+  - class_name: Activation
+    config:
+      activation: identity
+      dtype: float32
+      name: activation
+      trainable: true
+  name: sequential_6
+keras_version: 2.4.0
