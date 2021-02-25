@@ -102,7 +102,7 @@ config:
       kernel_regularizer: null
       name: dense
       trainable: true
-      units: ${default_sizes.default_layer_size_A}
+      units: ${layer_sizes.default_layer_size_A}
       use_bias: true
   - class_name: Dense
     config:
@@ -122,7 +122,7 @@ config:
       kernel_regularizer: null
       name: dense_1
       trainable: true
-      units: ${default_sizes.proprioception_size}
+      units: ${layer_sizes.proprioception_size}
       use_bias: true
   name: sequential
 keras_version: 2.4.0

@@ -1,5 +1,5 @@
 # @package hydra.launcher
-submitit_folder: ${hydra.sweep.dir}/${hydra.sweep.subdir}/%j
+submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 timeout_min: 10080
 cpus_per_task: 8
 mem_gb: 16

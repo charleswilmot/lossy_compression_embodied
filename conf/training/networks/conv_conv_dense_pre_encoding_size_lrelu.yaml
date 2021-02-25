@@ -102,7 +102,7 @@ config:
       kernel_regularizer: null
       name: dense
       trainable: true
-      units: ${default_sizes.pre_encoding_size}
+      units: ${layer_sizes.pre_encoding_size}
       use_bias: true
   name: sequential
 keras_version: 2.4.0

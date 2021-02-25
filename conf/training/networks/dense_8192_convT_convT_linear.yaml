@@ -7,7 +7,7 @@ config:
   #   config:
   #     batch_input_shape:
   #     - null
-  #     - ${default_sizes.pre_encoding_size}
+  #     - ${layer_sizes.pre_encoding_size}
   #     dtype: float32
   #     name: input_5
   #     ragged: false

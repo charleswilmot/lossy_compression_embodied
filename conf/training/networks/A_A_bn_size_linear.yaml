@@ -7,7 +7,7 @@ config:
   #   config:
   #     batch_input_shape:
   #     - null
-  #     - ${default_sizes.two_times_pre_encoding_size}
+  #     - ${layer_sizes.two_times_pre_encoding_size}
   #     dtype: float32
   #     name: input_3
   #     ragged: false
@@ -30,7 +30,7 @@ config:
       kernel_regularizer: null
       name: dense_4
       trainable: true
-      units: ${default_sizes.default_layer_size_A}
+      units: ${layer_sizes.default_layer_size_A}
       use_bias: true
   - class_name: Dense
     config:
@@ -50,7 +50,7 @@ config:
       kernel_regularizer: null
       name: dense_5
       trainable: true
-      units: ${default_sizes.default_layer_size_A}
+      units: ${layer_sizes.default_layer_size_A}
       use_bias: true
   - class_name: Dense
     config:
@@ -70,7 +70,7 @@ config:
       kernel_regularizer: null
       name: dense_6
       trainable: true
-      units: ${default_sizes.bottleneck_size}
+      units: ${layer_sizes.bottleneck_size}
       use_bias: true
   name: sequential_2
 keras_version: 2.4.0
