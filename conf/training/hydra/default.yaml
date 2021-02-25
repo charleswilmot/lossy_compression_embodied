@@ -10,4 +10,4 @@ job:
     override_dirname:
       kv_sep: '.'
       item_sep: '__'
-      exclude_keys: []
+      exclude_keys: [dataset.path]
