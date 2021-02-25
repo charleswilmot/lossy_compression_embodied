@@ -54,7 +54,7 @@ config:
       use_bias: true
   - class_name: Dense
     config:
-      activation: leaky_relu
+      activation: linear
       activity_regularizer: null
       bias_constraint: null
       bias_initializer:
@@ -70,7 +70,7 @@ config:
       kernel_regularizer: null
       name: dense_13
       trainable: true
-      units: ${layer_sizes.end_effector_size}
+      units: ${layer_sizes.readout_size}
       use_bias: true
   name: sequential_5
 keras_version: 2.4.0

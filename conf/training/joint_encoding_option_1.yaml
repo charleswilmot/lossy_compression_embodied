@@ -6,6 +6,6 @@ defaults:
   - networks@jointencoder.pre_decoding_model: A_A_two_pre_encoding_size_lrelu
   - networks@jointencoder.decoding_model_0: dense_8192_convT_convT_linear
   - networks@jointencoder.decoding_model_1: A_A_prop_size_linear
-  - networks@readout.model: A_A_ee_size_linear
+  - networks@readout.model: A_A_readout_size_linear
   - networks@layer_sizes: default_sizes
   - hydra: default

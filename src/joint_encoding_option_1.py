@@ -1,3 +1,4 @@
+import tensorflow as tf
 import hydra
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
@@ -7,8 +8,6 @@ from dataset import get_batched_dataset
 
 @hydra.main(config_path="../conf/training/", config_name="joint_encoding_option_1.yaml")
 def joint_encoding(config):
-    # print(OmegaConf.to_yaml(config))
-    # print("\n" * 10)
     dataset = get_batched_dataset(
         get_original_cwd() + '/' + config.dataset.path,
         config.dataset.batch_size,
@@ -16,9 +15,9 @@ def joint_encoding(config):
         z_score_frames=False
     )
     exp = JointEncodingOption1(config)
-    exp.train_jointencoder(dataset.map(lambda x: (x['frame'], x['arm0_positions'])))
-    exp.save_image_reconstructions(dataset.map(lambda x: (x['frame'], x['arm0_positions'])).take(10))
-    exp.train_readout(dataset.map(lambda x: (x['frame'], x['arm0_positions'], x['arm0_end_eff'])))
+    exp.train_jointencoder(frame_and_proprioception(dataset))
+    exp.save_image_reconstructions(frame_and_proprioception(dataset).take(10))
+    exp.train_readout(frame_proprioception_and_readout_target(dataset))
 
 
 if __name__ == '__main__':

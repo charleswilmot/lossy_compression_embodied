@@ -10,6 +10,6 @@ defaults:
   - networks@jointencoder.pre_decoding_model: A_A_pre_encoding_size_plus_prop_size_linear
   - networks@jointencoder.decoding_model_0: identity
   - networks@jointencoder.decoding_model_1: identity
-  - networks@readout.model: A_A_ee_size_linear
+  - networks@readout.model: A_A_readout_size_linear
   - networks@layer_sizes: default_sizes
   - hydra: default

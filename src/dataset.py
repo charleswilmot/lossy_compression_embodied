@@ -99,6 +99,50 @@ def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
     return dataset
 
 
+def frame_and_proprioception(dataset):
+    return dataset.map(lambda x: (x['frame'], tf.concat(
+        [
+            # x['arm0_end_eff'],
+            x['arm0_positions'],
+            x['arm0_velocities'],
+            # x['arm0_forces'],
+        ],
+        axis=-1,
+    )))
+
+
+def frame_proprioception_and_readout_target(dataset):
+    return dataset.map(lambda x: (
+        x['frame'],
+        tf.concat(
+            [
+                # x['arm0_end_eff'],
+                x['arm0_positions'],
+                x['arm0_velocities'],
+                # x['arm0_forces'],
+            ],
+            axis=-1,
+        ),
+        tf.concat(
+            [
+                x['arm0_end_eff'],
+                x['arm0_positions'],
+                x['arm0_velocities'],
+                # x['arm0_forces'],
+                x['arm1_end_eff'],
+                x['arm1_positions'],
+                x['arm1_velocities'],
+                # x['arm1_forces'],
+            ],
+            axis=-1,
+        )
+    ))
+
+
+def frame_only(dataset):
+    return dataset.map(lambda x: x['frame'])
+
+
 if __name__ == '__main__':
     import sys
     # d = get_dataset(sys.argv[1])
