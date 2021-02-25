@@ -5,7 +5,7 @@ from experiments import JointEncodingOption1, JointEncodingOption2
 from dataset import get_batched_dataset
 
 
-@hydra.main(config_path="../conf/training/", config_name="option_2.yaml")
+@hydra.main(config_path="../conf/training/", config_name="joint_encoding_option_2.yaml")
 def joint_encoding(config):
     # print(OmegaConf.to_yaml(config))
     # print("\n" * 10)
