@@ -1,4 +1,5 @@
 # @package _global_
+repetition: 0
 
 dataset:
   path: ../datasets/32x64/
@@ -15,7 +16,7 @@ mod_1_to_0:
   n_epochs: 1
 
 autoencoder:
-  learning_rate: 1e-3
+  learning_rate: 5e-4
   n_epochs: 1
 
 jointencoder:
