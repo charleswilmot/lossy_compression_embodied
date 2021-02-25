@@ -153,6 +153,14 @@ class Experiment:
                 self.print_cross_modality_losses(loss_0, loss_1)
                 step += 1
 
+    def z_score_encoding(self, dataset):
+        welford = Welford(shape=(self.autoencoder.encoding_size,))
+        for inp in dataset:
+            encoding = self.autoencoder(inp, what=['encoding'])['encoding']
+            welford(encoding)
+        self.encoding_mean = welford.mean
+        self.encoding_std = welford.std
+
     def get_image_and_reconstructions(self, dataset):
         return np.array([(
                 inp_0,
@@ -226,14 +234,6 @@ class JointEncodingOption2(Experiment):
         encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         encoding_b = self.jointencoder(encoding_a, inp_1, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
-
-    def z_score_encoding(self, dataset):
-        welford = Welford(shape=(self.autoencoder.encoding_size,))
-        for inp in dataset:
-            encoding = self.autoencoder(inp, what=['encoding'])['encoding']
-            welford(encoding)
-        self.encoding_mean = welford.mean
-        self.encoding_std = welford.std
 
     def get_image_reconstructions(self, inp_0, inp_1):
         return self.autoencoder.get_reconstruction(
