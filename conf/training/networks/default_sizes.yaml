@@ -4,5 +4,5 @@ two_times_pre_encoding_size: 200
 pre_encoding_size_plus_prop_size: 107
 bottleneck_size: 100
 readout_size: 34
-proprioception_size: 17
+proprioception_size: 14
 default_layer_size_A: 200

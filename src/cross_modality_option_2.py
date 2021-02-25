@@ -3,7 +3,7 @@ import hydra
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
 from experiments import CrossModalityOption1, CrossModalityOption2
-from dataset import get_batched_dataset
+from dataset import get_batched_dataset, frame_only, frame_and_proprioception, frame_proprioception_and_readout_target
 
 
 @hydra.main(config_path="../conf/training/", config_name="cross_modality_option_2.yaml")

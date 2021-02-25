@@ -51,22 +51,12 @@ class JointEncoder:
         return self.decoding_model_1(pre_reconstruction_1)
 
     @tf.function
-    def get_loss_0(self, inp_0, reconstruction_0):
-        error = (reconstruction_0 - inp_0) ** 2
+    def get_loss(self, inp, reconstruction):
+        error = (reconstruction - inp) ** 2
         if self.reduction_type == 'mean':
-            return tf.reduce_mean(error)
+            return tf.reduce_mean(error, axis=0)
         else:
-            axis = (x for x in range(error.ndim) if x != 0)
-            return tf.reduce_sum(tf.reduce_mean(error, axis=axis))
-
-    @tf.function
-    def get_loss_1(self, inp_1, reconstruction_1):
-        error = (reconstruction_1 - inp_1) ** 2
-        if self.reduction_type == 'mean':
-            return tf.reduce_mean(error)
-        else:
-            axis = (x for x in range(error.ndim) if x != 0)
-            return tf.reduce_sum(tf.reduce_mean(error, axis=axis))
+            return tf.reduce_sum(error, axis=0)
 
     @tf.function
     def __call__(self, inp_0, inp_1, what):
@@ -89,8 +79,8 @@ class JointEncoder:
             reconstruction_0 = self.get_reconstruction_0(pre_reconstruction_0)
             reconstruction_1 = self.get_reconstruction_1(pre_reconstruction_1)
         if stop > 3:
-            loss_0 = self.get_loss_0(inp_0, reconstruction_0)
-            loss_1 = self.get_loss_1(inp_1, reconstruction_1)
+            loss_0 = self.get_loss(inp_0, reconstruction_0)
+            loss_1 = self.get_loss(inp_1, reconstruction_1)
         if 'pre_encodings' in what:
             ret['pre_encoding_0'] = pre_encoding_0
             ret['pre_encoding_1'] = pre_encoding_1
@@ -112,7 +102,9 @@ class JointEncoder:
         with tf.GradientTape() as tape:
             ret = self(inp_0, inp_1, what=['losses'])
             loss_0, loss_1 = ret['loss_0'], ret['loss_1']
-            loss = (loss_0 + loss_1) / 2.0
+            mean_loss_0 = tf.reduce_mean(loss_0)
+            mean_loss_1 = tf.reduce_mean(loss_1)
+            loss = (mean_loss_0 + mean_loss_1) / 2.0
             vars = \
                 self.pre_encoding_model_0.trainable_variables + \
                 self.pre_encoding_model_1.trainable_variables + \
@@ -146,9 +138,9 @@ class AutoEncoder:
     def get_loss(self, inp, reconstruction):
         error = (reconstruction - inp) ** 2
         if self.reduction_type == 'mean':
-            return tf.reduce_mean(error)
+            return tf.reduce_mean(error, axis=0)
         else:
-            return tf.reduce_sum(tf.reduce_mean(error, axis=[-3, -2, -1]))
+            return tf.reduce_sum(error, axis=0)
 
     @tf.function
     def __call__(self, inp, what):
@@ -176,10 +168,11 @@ class AutoEncoder:
     def train(self, inp):
         with tf.GradientTape() as tape:
             loss = self(inp, what=['loss'])['loss']
+            mean_loss = tf.reduce_mean(loss)
             vars = \
                 self.encoding_model.trainable_variables + \
                 self.decoding_model.trainable_variables
-            grads = tape.gradient(loss, vars)
+            grads = tape.gradient(mean_loss, vars)
             self.optimizer.apply_gradients(zip(grads, vars))
         return loss
 
@@ -199,9 +192,9 @@ class MLP:
     def get_loss(self, out, target):
         error = (out - target) ** 2
         if self.reduction_type == 'mean':
-            return tf.reduce_mean(error)
+            return tf.reduce_mean(error, axis=0)
         else:
-            return tf.reduce_sum(tf.reduce_mean(error, axis=-1))
+            return tf.reduce_sum(error, axis=0)
 
     @tf.function
     def __call__(self, inp, target=None, what=['output']):
@@ -224,7 +217,8 @@ class MLP:
     def train(self, inp, target):
         with tf.GradientTape() as tape:
             loss = self(inp, target, what=['loss'])['loss']
+            mean_loss = tf.reduce_mean(loss)
             vars = self.model.trainable_variables
-            grads = tape.gradient(loss, vars)
+            grads = tape.gradient(mean_loss, vars)
             self.optimizer.apply_gradients(zip(grads, vars))
         return loss

@@ -13,32 +13,103 @@ class Experiment:
         makedirs(self.reconstructions_path)
 
     def log_image_reconstruction_loss(self, loss_0, step):
-        tf.summary.scalar("jointencoder/loss_image", loss_0, step=step)
+        stop = loss_0.shape[1] // 2
+        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+        tf.summary.scalar("jointencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
+        tf.summary.scalar("jointencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
 
     def log_proprioception_reconstruction_loss(self, loss_1, step):
-        tf.summary.scalar("jointencoder/loss_proprioception", loss_1, step=step)
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        tf.summary.scalar("jointencoder/loss_proprioception", tf.reduce_mean(loss_1), step=step)
+        tf.summary.scalar("jointencoder/loss_position", tf.reduce_mean(loss_1[position_slice]), step=step)
+        tf.summary.scalar("jointencoder/loss_velocity", tf.reduce_mean(loss_1[velocity_slice]), step=step)
 
     def print_image_proprioception_losses(self, loss_0, loss_1):
-        print("image loss: {:.4f}    proprioception loss: {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
+        stop = loss_0.shape[1] // 2
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        print("image loss: {:.4f} ({:.4f}/{:.4f})    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
+            tf.reduce_mean(loss_0).numpy(),
+            tf.reduce_mean(loss_0[:, :stop]).numpy(),
+            tf.reduce_mean(loss_0[:, stop:]).numpy(),
+            tf.reduce_mean(loss_1).numpy(),
+            tf.reduce_mean(loss_1[position_slice]).numpy(),
+            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
+        ))
 
     def log_readout_loss(self, loss, step):
-        tf.summary.scalar("readout/loss", loss, step=step)
+        arm0_end_eff_slice = slice(0, 3)
+        arm0_positions_slice = slice(3, 10)
+        arm0_velocities_slice = slice(10, 17)
+        arm1_end_eff_slice = slice(17, 20)
+        arm1_positions_slice = slice(20, 27)
+        arm1_velocities_slice = slice(27, 34)
+        tf.summary.scalar("readout/loss", tf.reduce_mean(loss), step=step)
+        tf.summary.scalar("readout/arm0_end_eff", tf.reduce_mean(loss[arm0_end_eff_slice]), step=step)
+        tf.summary.scalar("readout/arm0_positions", tf.reduce_mean(loss[arm0_positions_slice]), step=step)
+        tf.summary.scalar("readout/arm0_velocities", tf.reduce_mean(loss[arm0_velocities_slice]), step=step)
+        tf.summary.scalar("readout/arm1_end_eff", tf.reduce_mean(loss[arm1_end_eff_slice]), step=step)
+        tf.summary.scalar("readout/arm1_positions", tf.reduce_mean(loss[arm1_positions_slice]), step=step)
+        tf.summary.scalar("readout/arm1_velocities", tf.reduce_mean(loss[arm1_velocities_slice]), step=step)
 
     def print_readout_loss(self, loss):
-        print("readout loss: {:.4f}".format(loss.numpy()))
+        arm0_end_eff_slice = slice(0, 3)
+        arm0_positions_slice = slice(3, 10)
+        arm0_velocities_slice = slice(10, 17)
+        arm1_end_eff_slice = slice(17, 20)
+        arm1_positions_slice = slice(20, 27)
+        arm1_velocities_slice = slice(27, 34)
+        print("readout loss: {:.4f}    eef {:.4f}  pos {:.4f}  vel {:.4f}  eef {:.4f}  pos {:.4f}  vel {:.4f}".format(
+            tf.reduce_mean(loss).numpy(),
+            tf.reduce_mean(loss[arm0_end_eff_slice]).numpy(),
+            tf.reduce_mean(loss[arm0_positions_slice]).numpy(),
+            tf.reduce_mean(loss[arm0_velocities_slice]).numpy(),
+            tf.reduce_mean(loss[arm1_end_eff_slice]).numpy(),
+            tf.reduce_mean(loss[arm1_positions_slice]).numpy(),
+            tf.reduce_mean(loss[arm1_velocities_slice]).numpy(),
+        ))
 
-    def log_image_autoencoder_loss(loss, step):
-        tf.summary.scalar("autoencoder/loss", loss, step=step)
+    def log_image_autoencoder_loss(loss_0, step):
+        stop = loss_0.shape[1] // 2
+        tf.summary.scalar("autoencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+        tf.summary.scalar("autoencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
+        tf.summary.scalar("autoencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
 
-    def print_image_autoencoder_loss(loss):
-        print("autoencoder loss: {:.4f}".format(loss.numpy()))
+    def print_image_autoencoder_loss(loss_0):
+        stop = loss_0.shape[1] // 2
+        print("autoencoder loss: {:.4f} ({:.4f}/{:.4f})".format(
+            tf.reduce_mean(loss_0).numpy(),
+            tf.reduce_mean(loss_0[:, :stop]).numpy(),
+            tf.reduce_mean(loss_0[:, stop:]).numpy(),
+        ))
+
+    def print_image_proprioception_losses(self, loss_0, loss_1):
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        stop = loss_0.shape[1] // 2
+        print("image loss: {:.4f} ({:.4f}/{:.4f})    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
+            tf.reduce_mean(loss_0).numpy(),
+            tf.reduce_mean(loss_0[:, :stop]).numpy(),
+            tf.reduce_mean(loss_0[:, stop:]).numpy(),
+            tf.reduce_mean(loss_1).numpy(),
+            tf.reduce_mean(loss_1[position_slice]).numpy(),
+            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
+        ))
 
     def log_cross_modality_losses(loss_0, loss_1, step):
-        tf.summary.scalar("cross_modality/loss_0_to_1", loss_0, step=step)
-        tf.summary.scalar("cross_modality/loss_1_to_0", loss_1, step=step)
+        stop = loss_0.shape[1] // 2
+        tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
+        tf.summary.scalar("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
+        tf.summary.scalar("cross_modality/loss_image_right", tf.reduce_mean(loss_1[:, stop:]), step=step)
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        tf.summary.scalar("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
+        tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
+        tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
 
     def print_cross_modality_losses(loss_0, loss_1):
-        print("loss 0 -> 1 : {:.4f}   loss 1 -> 0 : {:.4f}".format(loss_0.numpy(), loss_1.numpy()))
+        print("loss 0 -> 1 : {:.4f}   loss 1 -> 0 : {:.4f}".format(tf.reduce_mean(loss_0).numpy(), tf.reduce_mean(loss_1).numpy()))
 
     def train_jointencoder(self, dataset):
         step = 0
