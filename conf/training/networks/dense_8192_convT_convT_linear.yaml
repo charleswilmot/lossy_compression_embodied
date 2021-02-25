@@ -7,9 +7,9 @@ config:
   #   config:
   #     batch_input_shape:
   #     - null
-  #     - ${bottleneck_size}
+  #     - ${default_sizes.pre_encoding_size}
   #     dtype: float32
-  #     name: input_4
+  #     name: input_5
   #     ragged: false
   #     sparse: false
   - class_name: Dense
@@ -28,11 +28,20 @@ config:
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_7
+      name: dense_10
       trainable: true
-      units: ${default_layer_size_A}
+      units: 8192
       use_bias: true
-  - class_name: Dense
+  - class_name: Reshape
+    config:
+      dtype: float32
+      name: reshape
+      target_shape:
+      - 8
+      - 16
+      - 64
+      trainable: true
+  - class_name: Conv2DTranspose
     config:
       activation: leaky_relu
       activity_regularizer: null
@@ -41,18 +50,31 @@ config:
         class_name: Zeros
         config: {}
       bias_regularizer: null
+      data_format: channels_last
+      dilation_rate:
+      - 1
+      - 1
       dtype: float32
+      filters: 64
+      groups: 1
       kernel_constraint: null
       kernel_initializer:
         class_name: GlorotUniform
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_8
+      kernel_size:
+      - 4
+      - 4
+      name: conv2d_transpose
+      output_padding: null
+      padding: same
+      strides:
+      - 2
+      - 2
       trainable: true
-      units: ${default_layer_size_A}
       use_bias: true
-  - class_name: Dense
+  - class_name: Conv2DTranspose
     config:
       activation: linear
       activity_regularizer: null
@@ -61,16 +83,29 @@ config:
         class_name: Zeros
         config: {}
       bias_regularizer: null
+      data_format: channels_last
+      dilation_rate:
+      - 1
+      - 1
       dtype: float32
+      filters: 3
+      groups: 1
       kernel_constraint: null
       kernel_initializer:
         class_name: GlorotUniform
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_9
+      kernel_size:
+      - 4
+      - 4
+      name: conv2d_transpose_1
+      output_padding: null
+      padding: same
+      strides:
+      - 2
+      - 2
       trainable: true
-      units: ${two_times_pre_encoding_size}
       use_bias: true
-  name: sequential_3
+  name: sequential_4
 keras_version: 2.4.0

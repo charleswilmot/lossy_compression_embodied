@@ -1,0 +1,8 @@
+# @package _group_._name_
+pre_encoding_size: 100
+two_times_pre_encoding_size: 200
+pre_encoding_size_plus_prop_size: 107
+bottleneck_size: 100
+end_effector_size: 3
+proprioception_size: 7
+default_layer_size_A: 200

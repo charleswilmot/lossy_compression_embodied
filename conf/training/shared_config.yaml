@@ -1,0 +1,28 @@
+# @package _global_
+
+dataset:
+  path: ../datasets/32x64/
+  batch_size: 128
+
+cross_modality:
+  n_epochs: 1
+
+mod_0_to_1:
+  learning_rate: 1e-3
+
+mod_1_to_0:
+  learning_rate: 1e-3
+  n_epochs: 1
+
+autoencoder:
+  learning_rate: 1e-3
+  n_epochs: 1
+
+jointencoder:
+  learning_rate: 1e-3
+  n_epochs: 1
+  pre_reconstruction_0_size: ${default_size.pre_encoding_size}
+
+readout:
+  n_epochs: 1
+  learning_rate: 1e-3

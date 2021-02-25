@@ -7,9 +7,9 @@ config:
   #   config:
   #     batch_input_shape:
   #     - null
-  #     - ${bottleneck_size}
+  #     - ${default_sizes.two_times_pre_encoding_size}
   #     dtype: float32
-  #     name: input_4
+  #     name: input_3
   #     ragged: false
   #     sparse: false
   - class_name: Dense
@@ -28,9 +28,9 @@ config:
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_7
+      name: dense_4
       trainable: true
-      units: ${default_layer_size_A}
+      units: ${default_sizes.default_layer_size_A}
       use_bias: true
   - class_name: Dense
     config:
@@ -48,9 +48,9 @@ config:
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_8
+      name: dense_5
       trainable: true
-      units: ${default_layer_size_A}
+      units: ${default_sizes.default_layer_size_A}
       use_bias: true
   - class_name: Dense
     config:
@@ -68,9 +68,9 @@ config:
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_9
+      name: dense_6
       trainable: true
-      units: ${pre_encoding_size}
+      units: ${default_sizes.bottleneck_size}
       use_bias: true
-  name: sequential_3
+  name: sequential_2
 keras_version: 2.4.0

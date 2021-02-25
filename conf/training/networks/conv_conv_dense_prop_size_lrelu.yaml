@@ -7,11 +7,83 @@ config:
   #   config:
   #     batch_input_shape:
   #     - null
-  #     - ${pre_encoding_size}
+  #     - 32
+  #     - 64
+  #     - 3
   #     dtype: float32
-  #     name: input_6
+  #     name: input_1
   #     ragged: false
   #     sparse: false
+  - class_name: Conv2D
+    config:
+      activation: leaky_relu
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      data_format: channels_last
+      dilation_rate:
+      - 1
+      - 1
+      dtype: float32
+      filters: 64
+      groups: 1
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: GlorotUniform
+        config:
+          seed: null
+      kernel_regularizer: null
+      kernel_size:
+      - 4
+      - 4
+      name: conv2d
+      padding: same
+      strides:
+      - 2
+      - 2
+      trainable: true
+      use_bias: true
+  - class_name: Conv2D
+    config:
+      activation: leaky_relu
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      data_format: channels_last
+      dilation_rate:
+      - 1
+      - 1
+      dtype: float32
+      filters: 64
+      groups: 1
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: GlorotUniform
+        config:
+          seed: null
+      kernel_regularizer: null
+      kernel_size:
+      - 4
+      - 4
+      name: conv2d_1
+      padding: same
+      strides:
+      - 2
+      - 2
+      trainable: true
+      use_bias: true
+  - class_name: Flatten
+    config:
+      data_format: channels_last
+      dtype: float32
+      name: flatten
+      trainable: true
   - class_name: Dense
     config:
       activation: leaky_relu
@@ -28,9 +100,9 @@ config:
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_11
+      name: dense
       trainable: true
-      units: ${default_layer_size_A}
+      units: ${default_sizes.default_layer_size_A}
       use_bias: true
   - class_name: Dense
     config:
@@ -48,29 +120,9 @@ config:
         config:
           seed: null
       kernel_regularizer: null
-      name: dense_12
+      name: dense_1
       trainable: true
-      units: ${default_layer_size_A}
+      units: ${default_sizes.proprioception_size}
       use_bias: true
-  - class_name: Dense
-    config:
-      activation: leaky_relu
-      activity_regularizer: null
-      bias_constraint: null
-      bias_initializer:
-        class_name: Zeros
-        config: {}
-      bias_regularizer: null
-      dtype: float32
-      kernel_constraint: null
-      kernel_initializer:
-        class_name: GlorotUniform
-        config:
-          seed: null
-      kernel_regularizer: null
-      name: dense_13
-      trainable: true
-      units: ${proprioception_size}
-      use_bias: true
-  name: sequential_5
+  name: sequential
 keras_version: 2.4.0

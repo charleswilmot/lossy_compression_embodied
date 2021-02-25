@@ -5,7 +5,7 @@ from experiments import CrossModalityOption1, CrossModalityOption2
 from dataset import get_batched_dataset
 
 
-@hydra.main(config_path="../conf/joint_encoding/", config_name="cross_modality_option_1.yaml")
+@hydra.main(config_path="../conf/training/", config_name="cross_modality_option_1.yaml")
 def cross_modality(config):
     # print(OmegaConf.to_yaml(config))
     # print("\n" * 10)
