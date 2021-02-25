@@ -70,13 +70,13 @@ class Experiment:
             tf.reduce_mean(loss[arm1_velocities_slice]).numpy(),
         ))
 
-    def log_image_autoencoder_loss(loss_0, step):
+    def log_image_autoencoder_loss(self, loss_0, step):
         stop = loss_0.shape[1] // 2
         tf.summary.scalar("autoencoder/loss_image", tf.reduce_mean(loss_0), step=step)
         tf.summary.scalar("autoencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
         tf.summary.scalar("autoencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
 
-    def print_image_autoencoder_loss(loss_0):
+    def print_image_autoencoder_loss(self, loss_0):
         stop = loss_0.shape[1] // 2
         print("autoencoder loss: {:.4f} ({:.4f}/{:.4f})".format(
             tf.reduce_mean(loss_0).numpy(),
@@ -97,7 +97,7 @@ class Experiment:
             tf.reduce_mean(loss_1[velocity_slice]).numpy(),
         ))
 
-    def log_cross_modality_losses(loss_0, loss_1, step):
+    def log_cross_modality_losses(self, loss_0, loss_1, step):
         stop = loss_0.shape[1] // 2
         tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
         tf.summary.scalar("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
@@ -108,7 +108,7 @@ class Experiment:
         tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
         tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
 
-    def print_cross_modality_losses(loss_0, loss_1):
+    def print_cross_modality_losses(self, loss_0, loss_1):
         print("loss 0 -> 1 : {:.4f}   loss 1 -> 0 : {:.4f}".format(tf.reduce_mean(loss_0).numpy(), tf.reduce_mean(loss_1).numpy()))
 
     def train_jointencoder(self, dataset):
