@@ -98,7 +98,7 @@ class Experiment:
         ))
 
     def log_cross_modality_losses(self, loss_0, loss_1, step):
-        stop = loss_0.shape[1] // 2
+        stop = loss_1.shape[1] // 2
         tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
         tf.summary.scalar("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
         tf.summary.scalar("cross_modality/loss_image_right", tf.reduce_mean(loss_1[:, stop:]), step=step)
