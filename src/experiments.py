@@ -139,15 +139,28 @@ class Experiment:
         return {key: value / step for key, value in readouts.items()}
 
     def get_image_and_reconstructions(self, dataset):
-        return np.array([(
-                inp_0,
-                self.get_image_reconstructions(
+        l = []
+        step = 0
+        for inp_0, inp_1 in dataset:
+            print(step)
+            step += 1
+            l.append((
                     inp_0,
-                    inp_1
-                )
-            )
-            for inp_0, inp_1 in dataset
-        ])
+                    self.get_image_reconstructions(
+                        inp_0,
+                        inp_1
+                    )
+                ))
+        return np.array(l)
+        # return np.array([(
+        #         inp_0,
+        #         self.get_image_reconstructions(
+        #             inp_0,
+        #             inp_1
+        #         )
+        #     )
+        #     for inp_0, inp_1 in dataset
+        # ])
 
     def save_image_reconstructions(self, dataset):
         image_reconstructions = self.get_image_and_reconstructions(dataset) # shape = [M, 2, N, height, width, 3]
