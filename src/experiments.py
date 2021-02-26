@@ -122,14 +122,14 @@ class Experiment:
         arm1_positions_slice = slice(20, 27)
         arm1_velocities_slice = slice(27, 34)
         for inp_0, inp_1, target in dataset:
-            readout_loss = self.get_readout_loss(inp_0, inp_1, target)
+            readout_loss = self.get_readout_loss(inp_0, inp_1, target).numpy()
             readouts_batch = {
-                'arm0_end_eff': np.mean(loss[arm0_end_eff_slice]),
-                'arm0_positions': np.mean(loss[arm0_positions_slice]),
-                'arm0_velocities': np.mean(loss[arm0_velocities_slice]),
-                'arm1_end_eff': np.mean(loss[arm1_end_eff_slice]),
-                'arm1_positions': np.mean(loss[arm1_positions_slice]),
-                'arm1_velocities': np.mean(loss[arm1_velocities_slice]),
+                'arm0_end_eff': np.mean(readout_loss[arm0_end_eff_slice]),
+                'arm0_positions': np.mean(readout_loss[arm0_positions_slice]),
+                'arm0_velocities': np.mean(readout_loss[arm0_velocities_slice]),
+                'arm1_end_eff': np.mean(readout_loss[arm1_end_eff_slice]),
+                'arm1_positions': np.mean(readout_loss[arm1_positions_slice]),
+                'arm1_velocities': np.mean(readout_loss[arm1_velocities_slice]),
             }
             for key, value in readouts_batch.items():
                 if key not in readouts:

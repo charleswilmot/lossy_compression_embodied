@@ -19,12 +19,18 @@ def joint_encoding(config):
         z_score_frames=False
     )
     exp = JointEncodingOption2(config)
+    print('TRAINING AUTO ENCODER')
     exp.train_autoencoder(frame_only(dataset))
-    exp.z_score_encoding(frame_only(dataset).take(10))
+    exp.z_score_encoding(frame_only(dataset.take(10)))
+    print('TRAINING JOINT ENCODER')
     exp.train_jointencoder(frame_and_proprioception(dataset))
-    frame_error_map = exp.save_image_reconstructions(frame_and_proprioception(dataset).take(10))
+    print('GENERATING RECONSTRUCTIONS')
+    frame_error_map = exp.save_image_reconstructions(frame_and_proprioception(dataset.take(10)))
+    print('TRAINING READOUT')
     exp.train_readout(frame_proprioception_and_readout_target(dataset))
-    readouts = exp.get_readouts(frame_proprioception_and_readout_target(dataset).take(1000))
+    print('COMPUTING READOUT LOSSES')
+    readouts = exp.get_readouts(frame_proprioception_and_readout_target(dataset.take(1000)))
+    print('STORING RESULTS IN THE DATABASE')
     db = ResultDatabase(get_original_cwd() + '/results/' + config.database_name)
     db.insert(
         date_time=datetime.now(),
