@@ -91,11 +91,11 @@ def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
             }
 
     dataset = get_dataset(path)
-    dataset = dataset.shuffle(batch_size * 5, reshuffle_each_iteration=True)
+    dataset = dataset.shuffle(batch_size * 20, reshuffle_each_iteration=True)
     dataset = dataset.map(preprocess)
     dataset = dataset.repeat(n_epochs)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(batch_size * 5)
+    dataset = dataset.prefetch(40)
     return dataset
 
 
