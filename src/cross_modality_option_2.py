@@ -11,7 +11,7 @@ from datetime import datetime
 
 @hydra.main(config_path="../conf/training/", config_name="cross_modality_option_2.yaml")
 def cross_modality(config):
-    full_conf = zlib.compress(OmegaConf.to_yaml(config, resolve=True))
+    full_conf = zlib.compress(OmegaConf.to_yaml(config, resolve=True).encode())
     dataset = get_batched_dataset(
         get_original_cwd() + '/' + config.dataset.path,
         config.dataset.batch_size,
