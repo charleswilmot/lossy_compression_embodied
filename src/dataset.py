@@ -95,11 +95,11 @@ def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
     dataset = dataset.map(preprocess)
     dataset = dataset.repeat(n_epochs)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(40)
+    # dataset = dataset.prefetch(40)
     return dataset
 
 
-def frame_and_proprioception(dataset):
+def frame_and_proprioception(dataset).prefetch(40):
     return dataset.map(lambda x: (x['frame'], tf.concat(
         [
             # x['arm0_end_eff'],
@@ -111,7 +111,7 @@ def frame_and_proprioception(dataset):
     )))
 
 
-def frame_proprioception_and_readout_target(dataset):
+def frame_proprioception_and_readout_target(dataset).prefetch(40):
     return dataset.map(lambda x: (
         x['frame'],
         tf.concat(
@@ -139,7 +139,7 @@ def frame_proprioception_and_readout_target(dataset):
     ))
 
 
-def frame_only(dataset):
+def frame_only(dataset).prefetch(40):
     return dataset.map(lambda x: x['frame'])
 
 
