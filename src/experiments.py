@@ -102,17 +102,6 @@ class Experiment:
                 self.print_readout_loss(loss)
                 step += 1
 
-
-    def train_autoencoder(self, dataset):
-        step = 0
-        dataset = dataset.repeat(self.n_epoch_autoencoder)
-        with self.writer.as_default():
-            for inp in dataset:
-                loss = self.train_autoencoder_batch(inp)
-                self.log_image_autoencoder_loss(loss, step)
-                self.print_image_autoencoder_loss(loss)
-                step += 1
-
     def train_cross_modality(self, dataset):
         step = 0
         dataset = dataset.repeat(self.n_epoch_cross_modality)
@@ -122,14 +111,6 @@ class Experiment:
                 self.log_cross_modality_losses(loss_0, loss_1, step)
                 self.print_cross_modality_losses(loss_0, loss_1)
                 step += 1
-
-    def z_score_encoding(self, dataset):
-        welford = Welford(shape=(self.autoencoder.encoding_size,))
-        for inp in dataset:
-            encoding = self.autoencoder(inp, what=['encoding'])['encoding']
-            welford(encoding)
-        self.encoding_mean = welford.mean
-        self.encoding_std = welford.std
 
     def get_image_and_reconstructions(self, dataset):
         return np.array([(
@@ -192,6 +173,24 @@ class ExperimentOption1(Experiment):
 
 
 class ExperimentOption2(Experiment):
+    def train_autoencoder(self, dataset):
+        step = 0
+        dataset = dataset.repeat(self.n_epoch_autoencoder)
+        with self.writer.as_default():
+            for inp in dataset:
+                loss = self.train_autoencoder_batch(inp)
+                self.log_image_autoencoder_loss(loss, step)
+                self.print_image_autoencoder_loss(loss)
+                step += 1
+
+    def z_score_encoding(self, dataset):
+        welford = Welford(shape=(self.autoencoder.encoding_size,))
+        for inp in dataset:
+            encoding = self.autoencoder(inp, what=['encoding'])['encoding']
+            welford(encoding)
+        self.encoding_mean = welford.mean
+        self.encoding_std = welford.std
+
     def log_image_reconstruction_loss(self, loss_0, step):
         tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
 
@@ -302,10 +301,10 @@ class CrossModalityOption1(ExperimentOption1):
 
     def get_image_reconstructions(self, inp_0, inp_1):
         return self.jointencoder(
-            self.mod_0_to_1(inp_0, what=['output'])['output'],
             self.mod_1_to_0(inp_1, what=['output'])['output'],
+            self.mod_0_to_1(inp_0, what=['output'])['output'],
             what=['reconstructions']
-        )['reconstruction_1']
+        )['reconstruction_0']
 
 
 class CrossModalityOption2(ExperimentOption2):
@@ -344,16 +343,10 @@ class CrossModalityOption2(ExperimentOption2):
         return self.readout.train(encoding_b, target)
 
     def get_image_reconstructions(self, inp_0, inp_1):
-        return self.autoencoder.get_reconstruction(
-            self.jointencoder(
-                self.mod_0_to_1(
-                    (
-                        self.autoencoder(
-                            inp_0,
-                            what=['encoding']
-                        )['encoding'] - self.encoding_mean
-                    ) / self.encoding_std),
-                self.mod_1_to_0(inp_1),
-                what=['reconstructions']
-            )['reconstruction_0'] * self.encoding_std + self.encoding_mean
-        )
+        encoding = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
+        jointencoder_reconstruction = self.jointencoder(
+            self.mod_1_to_0(inp_1, what=['output'])['output'],
+            self.mod_0_to_1(encoding, what=['output'])['output'],
+            what=['reconstructions']
+        )['reconstruction_0'] * self.encoding_std + self.encoding_mean
+        return self.autoencoder.get_reconstruction(jointencoder_reconstruction)
