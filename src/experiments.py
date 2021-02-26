@@ -144,13 +144,13 @@ class Experiment:
         for inp_0, inp_1 in dataset:
             print(step)
             step += 1
-            l.append((
+            l.append([
                     inp_0,
                     self.get_image_reconstructions(
                         inp_0,
                         inp_1
                     )
-                ))
+                ])
         return np.array(l)
         # return np.array([(
         #         inp_0,
