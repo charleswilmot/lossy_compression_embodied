@@ -78,17 +78,6 @@ class Experiment:
             tf.reduce_mean(loss_1[velocity_slice]).numpy(),
         ))
 
-    def log_cross_modality_losses(self, loss_0, loss_1, step):
-        stop = loss_1.shape[1] // 2
-        tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
-        tf.summary.scalar("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
-        tf.summary.scalar("cross_modality/loss_image_right", tf.reduce_mean(loss_1[:, stop:]), step=step)
-        position_slice = slice(0, 7)
-        velocity_slice = slice(7, 14)
-        tf.summary.scalar("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
-        tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
-        tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
-
     def print_cross_modality_losses(self, loss_0, loss_1):
         print("loss 0 -> 1 : {:.4f}   loss 1 -> 0 : {:.4f}".format(tf.reduce_mean(loss_0).numpy(), tf.reduce_mean(loss_1).numpy()))
 
@@ -190,6 +179,17 @@ class ExperimentOption1(Experiment):
             tf.reduce_mean(loss_1[velocity_slice]).numpy(),
         ))
 
+    def log_cross_modality_losses(self, loss_0, loss_1, step):
+        stop = loss_1.shape[1] // 2
+        tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
+        tf.summary.scalar("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
+        tf.summary.scalar("cross_modality/loss_image_right", tf.reduce_mean(loss_1[:, stop:]), step=step)
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        tf.summary.scalar("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
+        tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
+        tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
+
 
 class ExperimentOption2(Experiment):
     def log_image_reconstruction_loss(self, loss_0, step):
@@ -204,6 +204,14 @@ class ExperimentOption2(Experiment):
             tf.reduce_mean(loss_1[position_slice]).numpy(),
             tf.reduce_mean(loss_1[velocity_slice]).numpy(),
         ))
+
+    def log_cross_modality_losses(self, loss_0, loss_1, step):
+        tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        tf.summary.scalar("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
+        tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
+        tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
 
 
 class JointEncodingOption1(ExperimentOption1):
