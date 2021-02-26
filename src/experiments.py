@@ -12,31 +12,12 @@ class Experiment:
         self.reconstructions_path = './reconstructions'
         makedirs(self.reconstructions_path)
 
-    def log_image_reconstruction_loss(self, loss_0, step):
-        stop = loss_0.shape[1] // 2
-        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
-        tf.summary.scalar("jointencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
-        tf.summary.scalar("jointencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
-
     def log_proprioception_reconstruction_loss(self, loss_1, step):
         position_slice = slice(0, 7)
         velocity_slice = slice(7, 14)
         tf.summary.scalar("jointencoder/loss_proprioception", tf.reduce_mean(loss_1), step=step)
         tf.summary.scalar("jointencoder/loss_position", tf.reduce_mean(loss_1[position_slice]), step=step)
         tf.summary.scalar("jointencoder/loss_velocity", tf.reduce_mean(loss_1[velocity_slice]), step=step)
-
-    def print_image_proprioception_losses(self, loss_0, loss_1):
-        stop = loss_0.shape[1] // 2
-        position_slice = slice(0, 7)
-        velocity_slice = slice(7, 14)
-        print("image loss: {:.4f} ({:.4f}/{:.4f})    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
-            tf.reduce_mean(loss_0).numpy(),
-            tf.reduce_mean(loss_0[:, :stop]).numpy(),
-            tf.reduce_mean(loss_0[:, stop:]).numpy(),
-            tf.reduce_mean(loss_1).numpy(),
-            tf.reduce_mean(loss_1[position_slice]).numpy(),
-            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
-        ))
 
     def log_readout_loss(self, loss, step):
         arm0_end_eff_slice = slice(0, 3)
@@ -189,7 +170,43 @@ class Experiment:
         Image.fromarray(error_map).resize(size).save(self.reconstructions_path + '/error_map_{:.4f}_{:.4f}.jpg'.format(mini, maxi))
 
 
-class JointEncodingOption1(Experiment):
+class ExperimentOption1(Experiment):
+    def log_image_reconstruction_loss(self, loss_0, step):
+        stop = loss_0.shape[1] // 2
+        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+        tf.summary.scalar("jointencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
+        tf.summary.scalar("jointencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
+
+    def print_image_proprioception_losses(self, loss_0, loss_1):
+        stop = loss_0.shape[1] // 2
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        print("image loss: {:.4f} ({:.4f}/{:.4f})    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
+            tf.reduce_mean(loss_0).numpy(),
+            tf.reduce_mean(loss_0[:, :stop]).numpy(),
+            tf.reduce_mean(loss_0[:, stop:]).numpy(),
+            tf.reduce_mean(loss_1).numpy(),
+            tf.reduce_mean(loss_1[position_slice]).numpy(),
+            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
+        ))
+
+
+class ExperimentOption2(Experiment):
+    def log_image_reconstruction_loss(self, loss_0, step):
+        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+
+    def print_image_proprioception_losses(self, loss_0, loss_1):
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        print("image loss: {:.4f}    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
+            tf.reduce_mean(loss_0).numpy(),
+            tf.reduce_mean(loss_1).numpy(),
+            tf.reduce_mean(loss_1[position_slice]).numpy(),
+            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
+        ))
+
+
+class JointEncodingOption1(ExperimentOption1):
     def __init__(self, config):
         super().__init__()
         self.jointencoder = JointEncoder(config.jointencoder)
@@ -212,7 +229,7 @@ class JointEncodingOption1(Experiment):
         )['reconstruction_0']
 
 
-class JointEncodingOption2(Experiment):
+class JointEncodingOption2(ExperimentOption2):
     def __init__(self, config):
         super().__init__()
         self.autoencoder = AutoEncoder(config.autoencoder)
@@ -248,7 +265,7 @@ class JointEncodingOption2(Experiment):
         )
 
 
-class CrossModalityOption1(Experiment):
+class CrossModalityOption1(ExperimentOption1):
     def __init__(self, config):
         super().__init__()
         self.mod_0_to_1 = MLP(config.mod_0_to_1)
@@ -267,12 +284,13 @@ class CrossModalityOption1(Experiment):
     def train_jointencoder_batch(self, inp_0, inp_1):
         prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        return self.jointencoder.train(prediction_1, prediction_0)
+        loss_1, loss_0 = self.jointencoder.train(prediction_0, prediction_1)
+        return loss_0, loss_1
 
     def train_readout_batch(self, inp_0, inp_1):
         prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        encoding = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
+        encoding = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
         return self.readout.train(encoding, target)
 
     def get_image_reconstructions(self, inp_0, inp_1):
@@ -283,7 +301,7 @@ class CrossModalityOption1(Experiment):
         )['reconstruction_1']
 
 
-class CrossModalityOption2(Experiment):
+class CrossModalityOption2(ExperimentOption2):
     def __init__(self, config):
         super().__init__()
         self.autoencoder = AutoEncoder(config.autoencoder)
@@ -309,26 +327,14 @@ class CrossModalityOption2(Experiment):
         encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
         prediction_0 = self.mod_0_to_1(encoding, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        return self.jointencoder.train(prediction_1, prediction_0)
-
-    def log_image_reconstruction_loss(self, loss_0, step):
-        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
-
-    def print_image_proprioception_losses(self, loss_0, loss_1):
-        position_slice = slice(0, 7)
-        velocity_slice = slice(7, 14)
-        print("image loss: {:.4f}    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
-            tf.reduce_mean(loss_0).numpy(),
-            tf.reduce_mean(loss_1).numpy(),
-            tf.reduce_mean(loss_1[position_slice]).numpy(),
-            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
-        ))
+        loss_1, loss_0 = self.jointencoder.train(prediction_0, prediction_1)
+        return loss_0, loss_1
 
     def train_readout_batch(self, inp_0, inp_1):
         encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
         prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        encoding_b = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
+        encoding_b = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
 
     def get_image_reconstructions(self, inp_0, inp_1):
