@@ -1,7 +1,7 @@
 # @package _group_._name_
 pre_encoding_size: 100
 two_times_pre_encoding_size: 200
-pre_encoding_size_plus_prop_size: 107
+pre_encoding_size_plus_prop_size: 114
 bottleneck_size: 100
 readout_size: 34
 proprioception_size: 14

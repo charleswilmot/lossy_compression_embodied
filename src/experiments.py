@@ -267,12 +267,12 @@ class CrossModalityOption1(Experiment):
     def train_jointencoder_batch(self, inp_0, inp_1):
         prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        return self.jointencoder.train(prediction_0, prediction_1)
+        return self.jointencoder.train(prediction_1, prediction_0)
 
     def train_readout_batch(self, inp_0, inp_1):
         prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        encoding = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
+        encoding = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
         return self.readout.train(encoding, target)
 
     def get_image_reconstructions(self, inp_0, inp_1):
@@ -309,13 +309,26 @@ class CrossModalityOption2(Experiment):
         encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
         prediction_0 = self.mod_0_to_1(encoding, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        return self.jointencoder.train(prediction_0, prediction_1)
+        return self.jointencoder.train(prediction_1, prediction_0)
+
+    def log_image_reconstruction_loss(self, loss_0, step):
+        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+
+    def print_image_proprioception_losses(self, loss_0, loss_1):
+        position_slice = slice(0, 7)
+        velocity_slice = slice(7, 14)
+        print("image loss: {:.4f}    proprioception loss: {:.4f} ({:.4f}/{:.4f})".format(
+            tf.reduce_mean(loss_0).numpy(),
+            tf.reduce_mean(loss_1).numpy(),
+            tf.reduce_mean(loss_1[position_slice]).numpy(),
+            tf.reduce_mean(loss_1[velocity_slice]).numpy(),
+        ))
 
     def train_readout_batch(self, inp_0, inp_1):
         encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
         prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
-        encoding_b = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
+        encoding_b = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
 
     def get_image_reconstructions(self, inp_0, inp_1):
