@@ -355,5 +355,5 @@ class CrossModalityOption2(ExperimentOption2):
                     ) / self.encoding_std),
                 self.mod_1_to_0(inp_1),
                 what=['reconstructions']
-            )['reconstruction_1'] * self.encoding_std + self.encoding_mean
+            )['reconstruction_0'] * self.encoding_std + self.encoding_mean
         )
