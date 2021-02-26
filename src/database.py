@@ -27,6 +27,7 @@ sql.register_converter("array", convert_array)
 
 class ResultDatabase:
     def __init__(self, path):
+        print('opening database at {}'.format(path))
         self.path = path
         self.conn = sql.connect(path, detect_types=sql.PARSE_DECLTYPES)
         self.cursor = self.conn.cursor()
@@ -106,7 +107,7 @@ class ResultDatabase:
 if __name__ == '__main__':
     from datetime import datetime
 
-    db = ResultDatabase('/tmp/test2.db')
+    db = ResultDatabase('/tmp/test3.db')
 
 
 

@@ -122,6 +122,7 @@ class Experiment:
         arm1_positions_slice = slice(20, 27)
         arm1_velocities_slice = slice(27, 34)
         for inp_0, inp_1, target in dataset:
+            step += 1
             readout_loss = self.get_readout_loss(inp_0, inp_1, target).numpy()
             readouts_batch = {
                 'arm0_end_eff': np.mean(readout_loss[arm0_end_eff_slice]),
@@ -139,28 +140,15 @@ class Experiment:
         return {key: value / step for key, value in readouts.items()}
 
     def get_image_and_reconstructions(self, dataset):
-        l = []
-        step = 0
-        for inp_0, inp_1 in dataset:
-            print(step)
-            step += 1
-            l.append([
-                    inp_0.numpy(),
-                    self.get_image_reconstructions(
-                        inp_0,
-                        inp_1
-                    ).numpy()
-                ])
-        return np.array(l)
-        # return np.array([(
-        #         inp_0,
-        #         self.get_image_reconstructions(
-        #             inp_0,
-        #             inp_1
-        #         )
-        #     )
-        #     for inp_0, inp_1 in dataset
-        # ])
+        return np.array([(
+                inp_0.numpy(),
+                self.get_image_reconstructions(
+                    inp_0,
+                    inp_1
+                ).numpy()
+            )
+            for inp_0, inp_1 in dataset
+        ])
 
     def save_image_reconstructions(self, dataset):
         image_reconstructions = self.get_image_and_reconstructions(dataset) # shape = [M, 2, N, height, width, 3]
@@ -169,7 +157,6 @@ class Experiment:
         size = (image_reconstructions.shape[4] * ratio, image_reconstructions.shape[3] * ratio)
         for j, batch in enumerate(image_reconstructions):
             for i in range(batch_size):
-                print(i, j)
                 frame = np.concatenate([batch[0, i], batch[1, i]], axis=0)
                 frame = np.clip(frame * 127.5 + 127.5, 0, 255).astype(np.uint8)
                 Image.fromarray(frame).resize(size).save(self.reconstructions_path + '/{:04d}_{:04d}.jpg'.format(j, i))
