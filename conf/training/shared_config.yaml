@@ -20,7 +20,7 @@ autoencoder:
   n_epochs: 1
 
 jointencoder:
-  learning_rate: 1e-3
+  learning_rate: 5e-4
   n_epochs: 1
   pre_reconstruction_0_size: ${layer_sizes.pre_encoding_size}
 
