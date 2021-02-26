@@ -295,7 +295,7 @@ class CrossModalityOption1(ExperimentOption1):
         loss_1, loss_0 = self.jointencoder.train(prediction_0, prediction_1)
         return loss_0, loss_1
 
-    def train_readout_batch(self, inp_0, inp_1):
+    def train_readout_batch(self, inp_0, inp_1, target):
         prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
         encoding = self.jointencoder(prediction_0, prediction_1, what=['encoding'])['encoding']
@@ -338,7 +338,7 @@ class CrossModalityOption2(ExperimentOption2):
         loss_1, loss_0 = self.jointencoder.train(prediction_0, prediction_1)
         return loss_0, loss_1
 
-    def train_readout_batch(self, inp_0, inp_1):
+    def train_readout_batch(self, inp_0, inp_1, target):
         encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
         prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
