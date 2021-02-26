@@ -95,7 +95,7 @@ def get_batched_dataset(path, batch_size, n_epochs=None, z_score_frames=False):
     dataset = dataset.map(preprocess)
     dataset = dataset.repeat(n_epochs)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(40)
+    dataset = dataset.prefetch(400)
     return dataset
 
 

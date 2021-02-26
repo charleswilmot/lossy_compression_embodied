@@ -5,7 +5,7 @@ collection: collection_name
 
 dataset:
   path: ../datasets/32x64/
-  batch_size: 128
+  batch_size: 64
 
 cross_modality:
   n_epochs: 1
