@@ -145,11 +145,11 @@ class Experiment:
             print(step)
             step += 1
             l.append([
-                    inp_0,
+                    inp_0.numpy(),
                     self.get_image_reconstructions(
                         inp_0,
                         inp_1
-                    )
+                    ).numpy()
                 ])
         return np.array(l)
         # return np.array([(
