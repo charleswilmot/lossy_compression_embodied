@@ -169,6 +169,7 @@ class Experiment:
         size = (image_reconstructions.shape[4] * ratio, image_reconstructions.shape[3] * ratio)
         for j, batch in enumerate(image_reconstructions):
             for i in range(batch_size):
+                print(i, j)
                 frame = np.concatenate([batch[0, i], batch[1, i]], axis=0)
                 frame = np.clip(frame * 127.5 + 127.5, 0, 255).astype(np.uint8)
                 Image.fromarray(frame).resize(size).save(self.reconstructions_path + '/{:04d}_{:04d}.jpg'.format(j, i))
