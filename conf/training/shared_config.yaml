@@ -1,5 +1,7 @@
 # @package _global_
 repetition: 0
+database_name: debug.db
+collection: collection_name
 
 dataset:
   path: ../datasets/32x64/

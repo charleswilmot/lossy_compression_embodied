@@ -112,6 +112,32 @@ class Experiment:
                 self.print_cross_modality_losses(loss_0, loss_1)
                 step += 1
 
+    def get_readouts(self, dataset):
+        step = 0
+        readouts = {}
+        arm0_end_eff_slice = slice(0, 3)
+        arm0_positions_slice = slice(3, 10)
+        arm0_velocities_slice = slice(10, 17)
+        arm1_end_eff_slice = slice(17, 20)
+        arm1_positions_slice = slice(20, 27)
+        arm1_velocities_slice = slice(27, 34)
+        for inp_0, inp_1, target in dataset:
+            readout_loss = self.get_readout_loss(inp_0, inp_1, target)
+            readouts_batch = {
+                'arm0_end_eff': np.mean(loss[arm0_end_eff_slice]),
+                'arm0_positions': np.mean(loss[arm0_positions_slice]),
+                'arm0_velocities': np.mean(loss[arm0_velocities_slice]),
+                'arm1_end_eff': np.mean(loss[arm1_end_eff_slice]),
+                'arm1_positions': np.mean(loss[arm1_positions_slice]),
+                'arm1_velocities': np.mean(loss[arm1_velocities_slice]),
+            }
+            for key, value in readouts_batch.items():
+                if key not in readouts:
+                    readouts[key] = value
+                else:
+                    readouts[key] += value
+        return {key: value / step for key, value in readouts.items()}
+
     def get_image_and_reconstructions(self, dataset):
         return np.array([(
                 inp_0,
@@ -134,10 +160,12 @@ class Experiment:
                 frame = np.clip(frame * 127.5 + 127.5, 0, 255).astype(np.uint8)
                 Image.fromarray(frame).resize(size).save(self.reconstructions_path + '/{:04d}_{:04d}.jpg'.format(j, i))
         error_map = np.mean((image_reconstructions[:, 0] - image_reconstructions[:, 1]) ** 2, axis=(0, 1, -1)) # [height, width]
+        ret = np.copy(error_map)
         mini, maxi = error_map.min(), error_map.max()
         error_map = (error_map - mini) / (maxi - mini)
         error_map = (error_map * 255).astype(np.uint8)
         Image.fromarray(error_map).resize(size).save(self.reconstructions_path + '/error_map_{:.4f}_{:.4f}.jpg'.format(mini, maxi))
+        return ret
 
 
 class ExperimentOption1(Experiment):
@@ -228,6 +256,10 @@ class JointEncodingOption1(ExperimentOption1):
         encoding = self.jointencoder(inp_0, inp_1, what=['encoding'])['encoding']
         return self.readout.train(encoding, target)
 
+    def get_readout_loss(self, inp_0, inp_1, target):
+        encoding = self.jointencoder(inp_0, inp_1, what=['encoding'])['encoding']
+        return self.readout(encoding, target, what=['loss'])['loss']
+
     def get_image_reconstructions(self, inp_0, inp_1):
         return self.jointencoder(
             inp_0,
@@ -258,6 +290,12 @@ class JointEncodingOption2(ExperimentOption2):
         encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         encoding_b = self.jointencoder(encoding_a, inp_1, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
+
+    def get_readout_loss(self, inp_0, inp_1, target):
+        encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
+        encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
+        encoding_b = self.jointencoder(encoding_a, inp_1, what=['encoding'])['encoding']
+        return self.readout(encoding_b, target, what=['loss'])['loss']
 
     def get_image_reconstructions(self, inp_0, inp_1):
         return self.autoencoder.get_reconstruction(
@@ -298,6 +336,12 @@ class CrossModalityOption1(ExperimentOption1):
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
         encoding = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
         return self.readout.train(encoding, target)
+
+    def get_readout_loss(self, inp_0, inp_1, target):
+        prediction_0 = self.mod_0_to_1(inp_0, what=['output'])['output']
+        prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
+        encoding = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
+        return self.readout(encoding, target, what=['loss'])['loss']
 
     def get_image_reconstructions(self, inp_0, inp_1):
         return self.jointencoder(
@@ -341,6 +385,13 @@ class CrossModalityOption2(ExperimentOption2):
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
         encoding_b = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
+
+    def get_readout_loss(self, inp_0, inp_1, target):
+        encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
+        prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
+        prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
+        encoding_b = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
+        return self.readout(encoding_b, target, what=['loss'])['loss']
 
     def get_image_reconstructions(self, inp_0, inp_1):
         encoding = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
