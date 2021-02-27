@@ -3,7 +3,7 @@ import hydra
 import zlib
 from hydra.utils import get_original_cwd
 from omegaconf import OmegaConf
-from experiments import JointEncodingOption1, JointEncodingOption2
+from experiments import *
 from dataset import get_batched_dataset, frame_only, frame_and_proprioception, frame_proprioception_and_readout_target
 from database import ResultDatabase
 from datetime import datetime
