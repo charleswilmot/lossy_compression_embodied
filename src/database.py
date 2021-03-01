@@ -107,26 +107,7 @@ class ResultDatabase:
 if __name__ == '__main__':
     from datetime import datetime
 
-    db = ResultDatabase('/tmp/test3.db')
-
-
-
-    db.insert(
-        date_time = datetime(2021, 11, 15, 4, 30, 0),
-        collection = 'my_collection',
-        experiment_type = 'my_epx_type',
-        bottleneck_size = 123,
-        pre_encoding_size = 456,
-        arm0_end_eff_readout = 1.2,
-        arm0_positions_readout = 2.3,
-        arm0_velocities_readout = 3.4,
-        arm1_end_eff_readout = 4.5,
-        arm1_positions_readout = 5.6,
-        arm1_velocities_readout = 6.7,
-        frame_error_map = np.random.randint(0, 10, size=(4, 5)),
-        full_conf = b'aze',
-    )
-    db.conn.commit()
+    db = ResultDatabase('../results/db_version_1.db')
 
     results = db.get_dataframe('SELECT * FROM results')
     print(results)

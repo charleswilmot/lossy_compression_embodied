@@ -1,3 +1,5 @@
+experiment_type: joint_encoding_option_2
+
 defaults:
   - shared_config
   - networks@autoencoder.encoding_model: conv_conv_dense_pre_encoding_size_linear

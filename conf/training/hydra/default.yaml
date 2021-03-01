@@ -1,8 +1,8 @@
 # @package hydra
 run:
-  dir: ../experiments/${now:%Y-%m-%d}/${now:%H-%M-%S}_${hydra.job.override_dirname}
+  dir: ../experiments/${now:%Y-%m-%d}/${experiment_type}_${now:%H-%M-%S}_${hydra.job.override_dirname}
 sweep:
-  dir: ../experiments/${now:%Y-%m-%d}/${now:%H-%M-%S}/
+  dir: ../experiments/${now:%Y-%m-%d}/${experiment_type}_${now:%H-%M-%S}/
   subdir: job${hydra.job.num}_${hydra.job.override_dirname}
 job:
   config:
