@@ -287,13 +287,11 @@ class JointEncodingOption2(ExperimentOption2):
         return self.jointencoder.train(encoding, inp_1)
 
     def train_readout_batch(self, inp_0, inp_1, target):
-        encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
         encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         encoding_b = self.jointencoder(encoding_a, inp_1, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
 
     def get_readout_loss(self, inp_0, inp_1, target):
-        encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
         encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         encoding_b = self.jointencoder(encoding_a, inp_1, what=['encoding'])['encoding']
         return self.readout(encoding_b, target, what=['loss'])['loss']
@@ -369,26 +367,26 @@ class CrossModalityOption2(ExperimentOption2):
         return self.autoencoder.train(inp)
 
     def train_cross_modality_batch(self, inp_0, inp_1):
-        encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
+        encoding = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         loss_0 = self.mod_0_to_1.train(encoding, inp_1)
         loss_1 = self.mod_1_to_0.train(inp_1, encoding)
         return loss_0, loss_1
 
     def train_jointencoder_batch(self, inp_0, inp_1):
-        encoding = self.autoencoder(inp_0, what=['encoding'])['encoding']
+        encoding = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         prediction_0 = self.mod_0_to_1(encoding, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
         return self.jointencoder.train(prediction_1, prediction_0)
 
     def train_readout_batch(self, inp_0, inp_1, target):
-        encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
+        encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
         encoding_b = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
         return self.readout.train(encoding_b, target)
 
     def get_readout_loss(self, inp_0, inp_1, target):
-        encoding_a = self.autoencoder(inp_0, what=['encoding'])['encoding']
+        encoding_a = (self.autoencoder(inp_0, what=['encoding'])['encoding'] - self.encoding_mean) / self.encoding_std
         prediction_0 = self.mod_0_to_1(encoding_a, what=['output'])['output']
         prediction_1 = self.mod_1_to_0(inp_1, what=['output'])['output']
         encoding_b = self.jointencoder(prediction_1, prediction_0, what=['encoding'])['encoding']
