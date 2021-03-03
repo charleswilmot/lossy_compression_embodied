@@ -163,7 +163,7 @@ if __name__ == '__main__':
     dpi = 50
     # save = True
     # dpi = 300
-    experiments = ['joint_encoding_option_1', 'joint_encoding_option_2']
+    experiments = ['joint_encoding_option_1', 'joint_encoding_option_2'] #, 'cross_modality_option_1', 'cross_modality_option_2']
     n_experiments = len(experiments)
 
     db = ResultDatabase(database_path)
