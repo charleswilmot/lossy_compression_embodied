@@ -2,6 +2,7 @@
 repetition: 0
 database_name: debug.db
 collection: collection_name
+log_every: 500
 
 dataset:
   path: ../datasets/32x64/

@@ -7,17 +7,27 @@ from welford import Welford
 
 
 class Experiment:
-    def __init__(self):
+    def __init__(self, config):
+        self.log_every = config.log_every
+        self._metrics = {}
         self.writer = tf.summary.create_file_writer("./summaries")
         self.reconstructions_path = './reconstructions'
         makedirs(self.reconstructions_path)
 
+    def log_metric(self, name, value, step):
+        if name not in self._metrics:
+            self._metrics[name] = tf.keras.metrics.Mean(name, dtype=tf.float32)
+        self._metrics[name](value)
+        if (step + 1) % self.log_every == 0:
+            tf.summary.scalar(name, self._metrics[name].result(), step=step)
+            self._metrics[name].reset_state()
+
     def log_proprioception_reconstruction_loss(self, loss_1, step):
         position_slice = slice(0, 7)
         velocity_slice = slice(7, 14)
-        tf.summary.scalar("jointencoder/loss_proprioception", tf.reduce_mean(loss_1), step=step)
-        tf.summary.scalar("jointencoder/loss_position", tf.reduce_mean(loss_1[position_slice]), step=step)
-        tf.summary.scalar("jointencoder/loss_velocity", tf.reduce_mean(loss_1[velocity_slice]), step=step)
+        self.log_metric("jointencoder/loss_proprioception", tf.reduce_mean(loss_1), step=step)
+        self.log_metric("jointencoder/loss_position", tf.reduce_mean(loss_1[position_slice]), step=step)
+        self.log_metric("jointencoder/loss_velocity", tf.reduce_mean(loss_1[velocity_slice]), step=step)
 
     def log_readout_loss(self, loss, step):
         arm0_end_eff_slice = slice(0, 3)
@@ -26,13 +36,13 @@ class Experiment:
         arm1_end_eff_slice = slice(17, 20)
         arm1_positions_slice = slice(20, 27)
         arm1_velocities_slice = slice(27, 34)
-        tf.summary.scalar("readout/loss", tf.reduce_mean(loss), step=step)
-        tf.summary.scalar("readout/arm0_end_eff", tf.reduce_mean(loss[arm0_end_eff_slice]), step=step)
-        tf.summary.scalar("readout/arm0_positions", tf.reduce_mean(loss[arm0_positions_slice]), step=step)
-        tf.summary.scalar("readout/arm0_velocities", tf.reduce_mean(loss[arm0_velocities_slice]), step=step)
-        tf.summary.scalar("readout/arm1_end_eff", tf.reduce_mean(loss[arm1_end_eff_slice]), step=step)
-        tf.summary.scalar("readout/arm1_positions", tf.reduce_mean(loss[arm1_positions_slice]), step=step)
-        tf.summary.scalar("readout/arm1_velocities", tf.reduce_mean(loss[arm1_velocities_slice]), step=step)
+        self.log_metric("readout/loss", tf.reduce_mean(loss), step=step)
+        self.log_metric("readout/arm0_end_eff", tf.reduce_mean(loss[arm0_end_eff_slice]), step=step)
+        self.log_metric("readout/arm0_positions", tf.reduce_mean(loss[arm0_positions_slice]), step=step)
+        self.log_metric("readout/arm0_velocities", tf.reduce_mean(loss[arm0_velocities_slice]), step=step)
+        self.log_metric("readout/arm1_end_eff", tf.reduce_mean(loss[arm1_end_eff_slice]), step=step)
+        self.log_metric("readout/arm1_positions", tf.reduce_mean(loss[arm1_positions_slice]), step=step)
+        self.log_metric("readout/arm1_velocities", tf.reduce_mean(loss[arm1_velocities_slice]), step=step)
 
     def print_readout_loss(self, loss):
         arm0_end_eff_slice = slice(0, 3)
@@ -53,9 +63,9 @@ class Experiment:
 
     def log_image_autoencoder_loss(self, loss_0, step):
         stop = loss_0.shape[1] // 2
-        tf.summary.scalar("autoencoder/loss_image", tf.reduce_mean(loss_0), step=step)
-        tf.summary.scalar("autoencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
-        tf.summary.scalar("autoencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
+        self.log_metric("autoencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+        self.log_metric("autoencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
+        self.log_metric("autoencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
 
     def print_image_autoencoder_loss(self, loss_0):
         stop = loss_0.shape[1] // 2
@@ -172,9 +182,9 @@ class Experiment:
 class ExperimentOption1(Experiment):
     def log_image_reconstruction_loss(self, loss_0, step):
         stop = loss_0.shape[1] // 2
-        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
-        tf.summary.scalar("jointencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
-        tf.summary.scalar("jointencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
+        self.log_metric("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+        self.log_metric("jointencoder/loss_image_left", tf.reduce_mean(loss_0[:, :stop]), step=step)
+        self.log_metric("jointencoder/loss_image_right", tf.reduce_mean(loss_0[:, stop:]), step=step)
 
     def print_image_proprioception_losses(self, loss_0, loss_1):
         stop = loss_0.shape[1] // 2
@@ -191,14 +201,14 @@ class ExperimentOption1(Experiment):
 
     def log_cross_modality_losses(self, loss_0, loss_1, step):
         stop = loss_1.shape[1] // 2
-        tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
-        tf.summary.scalar("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
-        tf.summary.scalar("cross_modality/loss_image_right", tf.reduce_mean(loss_1[:, stop:]), step=step)
+        self.log_metric("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
+        self.log_metric("cross_modality/loss_image_left", tf.reduce_mean(loss_1[:, :stop]), step=step)
+        self.log_metric("cross_modality/loss_image_right", tf.reduce_mean(loss_1[:, stop:]), step=step)
         position_slice = slice(0, 7)
         velocity_slice = slice(7, 14)
-        tf.summary.scalar("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
-        tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
-        tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
+        self.log_metric("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
+        self.log_metric("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
+        self.log_metric("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
 
 
 class ExperimentOption2(Experiment):
@@ -221,7 +231,7 @@ class ExperimentOption2(Experiment):
         self.encoding_std = welford.std
 
     def log_image_reconstruction_loss(self, loss_0, step):
-        tf.summary.scalar("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
+        self.log_metric("jointencoder/loss_image", tf.reduce_mean(loss_0), step=step)
 
     def print_image_proprioception_losses(self, loss_0, loss_1):
         position_slice = slice(0, 7)
@@ -234,17 +244,17 @@ class ExperimentOption2(Experiment):
         ))
 
     def log_cross_modality_losses(self, loss_0, loss_1, step):
-        tf.summary.scalar("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
+        self.log_metric("cross_modality/loss_image", tf.reduce_mean(loss_1), step=step)
         position_slice = slice(0, 7)
         velocity_slice = slice(7, 14)
-        tf.summary.scalar("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
-        tf.summary.scalar("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
-        tf.summary.scalar("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
+        self.log_metric("cross_modality/loss_proprioception", tf.reduce_mean(loss_0), step=step)
+        self.log_metric("cross_modality/loss_position", tf.reduce_mean(loss_0[position_slice]), step=step)
+        self.log_metric("cross_modality/loss_velocity", tf.reduce_mean(loss_0[velocity_slice]), step=step)
 
 
 class JointEncodingOption1(ExperimentOption1):
     def __init__(self, config):
-        super().__init__()
+        super().__init__(config)
         self.jointencoder = JointEncoder(config.jointencoder)
         self.readout = MLP(config.readout)
         self.n_epoch_jointencoder = config.jointencoder.n_epochs
@@ -271,7 +281,7 @@ class JointEncodingOption1(ExperimentOption1):
 
 class JointEncodingOption2(ExperimentOption2):
     def __init__(self, config):
-        super().__init__()
+        super().__init__(config)
         self.autoencoder = AutoEncoder(config.autoencoder)
         self.jointencoder = JointEncoder(config.jointencoder)
         self.readout = MLP(config.readout)
@@ -311,7 +321,7 @@ class JointEncodingOption2(ExperimentOption2):
 
 class CrossModalityOption1(ExperimentOption1):
     def __init__(self, config):
-        super().__init__()
+        super().__init__(config)
         self.mod_0_to_1 = MLP(config.mod_0_to_1)
         self.mod_1_to_0 = MLP(config.mod_1_to_0)
         self.jointencoder = JointEncoder(config.jointencoder)
@@ -352,7 +362,7 @@ class CrossModalityOption1(ExperimentOption1):
 
 class CrossModalityOption2(ExperimentOption2):
     def __init__(self, config):
-        super().__init__()
+        super().__init__(config)
         self.autoencoder = AutoEncoder(config.autoencoder)
         self.mod_0_to_1 = MLP(config.mod_0_to_1)
         self.mod_1_to_0 = MLP(config.mod_1_to_0)
