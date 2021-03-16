@@ -37,7 +37,7 @@ def cross_modality(config):
     db.insert(
         date_time=datetime.now(),
         collection=config.collection,
-        experiment_type='cross_modality_option_2',
+        experiment_type=config.experiment_type,
         bottleneck_size=config.layer_sizes.bottleneck_size,
         pre_encoding_size=config.layer_sizes.pre_encoding_size,
         arm0_end_eff_readout=readouts['arm0_end_eff'],

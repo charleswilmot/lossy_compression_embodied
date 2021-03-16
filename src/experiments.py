@@ -20,7 +20,7 @@ class Experiment:
         self._metrics[name](value)
         if (step + 1) % self.log_every == 0:
             tf.summary.scalar(name, self._metrics[name].result(), step=step)
-            self._metrics[name].reset_state()
+            self._metrics[name].reset_states()
 
     def log_proprioception_reconstruction_loss(self, loss_1, step):
         position_slice = slice(0, 7)

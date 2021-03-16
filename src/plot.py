@@ -3,6 +3,7 @@ import numpy as np
 from database import ResultDatabase
 import pandas as pd
 from PIL import Image, ImageFont, ImageDraw
+import os
 
 
 BLUE_1 = (66 / 255, 135 / 255, 245 / 255)
@@ -52,7 +53,8 @@ def plot_readouts(ax, db, collection, experiment_type):
         'arm1_velocities_readout',
     ]
     colors = [BLUE_1, BLUE_2, BLUE_3, RED_1, RED_2, RED_3]
-    for name, color in zip(names, colors):
+    linestyles = ['-', '-', '--', '--', '--', ':']
+    for name, color, linestyle in zip(names, colors, linestyles):
         ax.fill_between(
             bn_size,
             means[name].values - stds[name].values,
@@ -64,12 +66,13 @@ def plot_readouts(ax, db, collection, experiment_type):
             bn_size,
             means[name].values,
             color=color,
-            label=name.replace('_readout', '').replace('_', ' ')
+            linestyle=linestyle,
+            label=name.replace('_readout', '').replace('_', ' ').replace('arm0', 'R arm').replace('arm1', 'L arm').replace('positions', 'pos').replace('velocities', 'vel')
         )
-    ax.set_title(experiment_type.replace('_', ' '))
+    ax.set_title(experiment_type.replace('joint_encoding', 'JE').replace('1a', '1').replace('cross_modality', 'CM').replace('_', ' '))
     ax.set_xlabel('bottleneck size')
     if ax.get_subplotspec().colspan[0] == 0:
-        ax.set_ylabel('readout error')
+        ax.set_ylabel('Readout error (MSE)')
     ax.set_ylim([-0.05, 1.05])
 
 
@@ -94,7 +97,7 @@ def plot_frame_rec_err(ax, db, collection, experiment_type):
         stop = series['frame_error_map'].shape[1] // 2
         return pd.Series({
             'bottleneck_size': series['bottleneck_size'],
-            'frame_error': np.mean(series['frame_error_map']),
+            # 'frame_error': np.mean(series['frame_error_map']),
             'frame_error_left': np.mean(series['frame_error_map'][:, :stop]),
             'frame_error_right': np.mean(series['frame_error_map'][:, stop:]),
         }, dtype=object)
@@ -104,9 +107,12 @@ def plot_frame_rec_err(ax, db, collection, experiment_type):
     means = grouped.mean()
     stds = grouped.std()
     bn_size = means.index.values
-    names = ['frame_error', 'frame_error_left', 'frame_error_right']
-    labels = ['both', 'left', 'right']
-    colors = [GREY_1, RED_1, BLUE_1]
+    # names = ['frame_error', 'frame_error_left', 'frame_error_right']
+    # labels = ['both', 'left half', 'right half']
+    # colors = [GREY_1, RED_1, BLUE_1]
+    names = ['frame_error_left', 'frame_error_right']
+    labels = ['left half', 'right half']
+    colors = [RED_1, BLUE_1]
     for name, label, color in zip(names, labels, colors):
         ax.fill_between(
             bn_size,
@@ -121,10 +127,10 @@ def plot_frame_rec_err(ax, db, collection, experiment_type):
             label=label,
             color=color
         )
-    ax.set_title(experiment_type.replace('_', ' '))
+    ax.set_title(experiment_type.replace('joint_encoding', 'JE').replace('1a', '1').replace('cross_modality', 'CM').replace('_', ' '))
     ax.set_xlabel('bottleneck size')
     if ax.get_subplotspec().colspan[0] == 0:
-        ax.set_ylabel('frame reconstruction error')
+        ax.set_ylabel('Image reconstruction error (MSE)')
     ax.set_ylim([0.006, 0.032])
 
 
@@ -175,7 +181,65 @@ def plot_frame_error_map(ax, db, collection, experiment_type):
     ax.imshow(frame_error_map, cmap='Greys')
     ax.set_yticks([])
     ax.set_xticks([])
-    ax.set_title(experiment_type.replace('_', ' '))
+    ax.set_title(experiment_type.replace('joint_encoding', 'JE').replace('1a', '1').replace('cross_modality', 'CM').replace('_', ' '))
+
+
+def generate_plots(db, collection, experiment_types, fig_ratio=0.7, dpi=300, save=False, prefix=''):
+    os.makedirs('/tmp/plots', exist_ok=True)
+    n_experiments = len(experiment_types)
+    subplots_adjust_1_args = {
+        1: dict(left=0.10, bottom=0.12, right=0.85, top=0.90, wspace=0.30, hspace=0.05),
+        2: dict(left=0.13, bottom=0.20, right=0.70, top=0.90, wspace=0.40, hspace=0.05),
+        3: dict(left=0.10, bottom=0.12, right=0.85, top=0.90, wspace=0.30, hspace=0.05),
+        4: dict(left=0.10, bottom=0.12, right=0.85, top=0.90, wspace=0.30, hspace=0.05),
+    }
+    subplots_adjust_2_args = {
+        1: dict(left=0.02, bottom=0.02, right=0.98, top=0.90, wspace=0.05, hspace=0.05),
+        2: dict(left=0.02, bottom=0.02, right=0.98, top=0.90, wspace=0.05, hspace=0.05),
+        3: dict(left=0.02, bottom=0.02, right=0.98, top=0.90, wspace=0.05, hspace=0.05),
+        4: dict(left=0.02, bottom=0.02, right=0.98, top=0.90, wspace=0.05, hspace=0.05),
+    }
+
+
+    fig = plt.figure(figsize=(fig_ratio * 4 * n_experiments, fig_ratio * 4), dpi=dpi)
+    for i, experiment_type in enumerate(experiment_types):
+        ax = fig.add_subplot(1, n_experiments, i + 1)
+        plot_readouts(ax, db, collection, experiment_type)
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='right')
+    fig.subplots_adjust(**subplots_adjust_1_args[n_experiments])
+    if save:
+        fig.savefig('/tmp/plots/{}readouts_dpi{}_ratio{}.png'.format(prefix, dpi, fig_ratio))
+    else:
+        plt.show()
+
+
+    fig = plt.figure(figsize=(fig_ratio * 4 * n_experiments, fig_ratio * 4), dpi=dpi)
+    for i, experiment_type in enumerate(experiment_types):
+        ax = fig.add_subplot(1, n_experiments, i + 1)
+        plot_frame_rec_err(ax, db, collection, experiment_type)
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='right')
+    fig.subplots_adjust(**subplots_adjust_1_args[n_experiments])
+    if save:
+        fig.savefig('/tmp/plots/{}frame_rec_err_dpi{}_ratio{}.png'.format(prefix, dpi, fig_ratio))
+    else:
+        plt.show()
+
+
+    fig = plt.figure(figsize=(fig_ratio * 4 * n_experiments, fig_ratio * 3), dpi=dpi)
+    for i, experiment_type in enumerate(experiment_types):
+        ax = fig.add_subplot(1, n_experiments, i + 1)
+        plot_frame_error_map(ax, db, collection, experiment_type)
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.subplots_adjust(**subplots_adjust_2_args[n_experiments])
+    if save:
+        fig.savefig('/tmp/plots/{}frame_error_map_dpi{}_ratio{}.png'.format(prefix, dpi, fig_ratio))
+    else:
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -183,51 +247,21 @@ if __name__ == '__main__':
 
     database_path = sys.argv[1]
     collection = sys.argv[2]
-    save = False
-    dpi = 50
-    # save = True
-    # dpi = 300
-    experiments = ['joint_encoding_option_1', 'joint_encoding_option_2', 'cross_modality_option_1', 'cross_modality_option_2']
-    n_experiments = len(experiments)
-
     db = ResultDatabase(database_path)
 
-    fig = plt.figure(figsize=(4 * n_experiments, 4), dpi=dpi)
-    for i, experiment_type in enumerate(experiments):
-        ax = fig.add_subplot(1, n_experiments, i + 1)
-        plot_readouts(ax, db, collection, experiment_type)
 
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='right')
-    fig.subplots_adjust(left=0.1, bottom=0.12, right=0.75, top=0.9, wspace=0.3, hspace=0.05)
-    if save:
-        fig.savefig('/tmp/readouts.png')
-    else:
-        plt.show()
+    generate_plots(
+        db,
+        collection,
+        ['joint_encoding_option_1a', 'cross_modality_option_1'],
+        save=True,
+        prefix='option_1_'
+    )
 
-
-    fig = plt.figure(figsize=(4 * n_experiments, 4), dpi=dpi)
-    for i, experiment_type in enumerate(experiments):
-        ax = fig.add_subplot(1, n_experiments, i + 1)
-        plot_frame_rec_err(ax, db, collection, experiment_type)
-
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='right')
-    fig.subplots_adjust(left=0.1, bottom=0.12, right=0.75, top=0.9, wspace=0.3, hspace=0.05)
-    if save:
-        fig.savefig('/tmp/frame_rec_err.png')
-    else:
-        plt.show()
-
-
-    fig = plt.figure(figsize=(4 * n_experiments, 4), dpi=dpi)
-    for i, experiment_type in enumerate(experiments):
-        ax = fig.add_subplot(1, n_experiments, i + 1)
-        plot_frame_error_map(ax, db, collection, experiment_type)
-
-    handles, labels = ax.get_legend_handles_labels()
-    fig.subplots_adjust(left=0.02, bottom=0.1, right=0.98, top=0.9, wspace=0.05, hspace=0.05)
-    if save:
-        fig.savefig('/tmp/frame_error_map.png')
-    else:
-        plt.show()
+    generate_plots(
+        db,
+        collection,
+        ['joint_encoding_option_2', 'cross_modality_option_2'],
+        save=True,
+        prefix='option_2_'
+    )
